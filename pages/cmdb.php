@@ -99,35 +99,35 @@
                 </div>
                 <div class="form-group">
                   <label for="recordName">Name</label>
-                  <input type="text" class="form-control info-field" id="recordName" aria-describedby="recordNameHelp" name="name">
+                  <input type="text" class="form-control info-field" id="recordName" aria-describedby="recordNameHelp" name="ServerName">
                 </div>
                 <div class="form-group">
                   <label for="recordFQDN">DNS Name</label>
-                  <input type="text" class="form-control info-field" id="recordFQDN" aria-describedby="recordFQDNHelp" name="fqdn">
+                  <input type="text" class="form-control info-field" id="recordFQDN" aria-describedby="recordFQDNHelp" name="FQDN">
                 </div>
                 <div class="form-group">
                   <label for="recordCPU">CPU(s)</label>
-                  <input type="text" class="form-control info-field" id="recordCPU" aria-describedby="recordCPUHelp" name="cpu">
+                  <input type="text" class="form-control info-field" id="recordCPU" aria-describedby="recordCPUHelp" name="CPU">
                 </div>
                 <div class="form-group">
                   <label for="recordMemory">Memory (MB)</label>
-                  <input type="text" class="form-control info-field" id="recordMemory" aria-describedby="recordMemoryHelp" name="memory">
+                  <input type="text" class="form-control info-field" id="recordMemory" aria-describedby="recordMemoryHelp" name="Memory">
                 </div>
                 <div class="form-group">
                   <label for="recordOS">OS</label>
-                  <input type="text" class="form-control info-field" id="recordOS" aria-describedby="recordOSHelp" name="os">
+                  <input type="text" class="form-control info-field" id="recordOS" aria-describedby="recordOSHelp" name="OperatingSystem">
                 </div>
                 <div class="form-group">
                   <label for="recordIP">IP Address</label>
-                  <input type="text" class="form-control info-field" id="recordIP" aria-describedby="recordIPHelp" name="ip">
+                  <input type="text" class="form-control info-field" id="recordIP" aria-describedby="recordIPHelp" name="IP">
                 </div>
                 <div class="form-group">
                   <label for="recordNetmask">Subnet Mask</label>
-                  <input type="text" class="form-control info-field" id="recordNetmask" aria-describedby="recordNetmaskHelp" name="mask">
+                  <input type="text" class="form-control info-field" id="recordNetmask" aria-describedby="recordNetmaskHelp" name="SubnetMask">
                 </div>
                 <div class="form-group">
                   <label for="recordGateway">Gateway</label>
-                  <input type="text" class="form-control info-field" id="recordGateway" aria-describedby="recordGatewayHelp" name="gateway" required>
+                  <input type="text" class="form-control info-field" id="recordGateway" aria-describedby="recordGatewayHelp" name="Gateway" required>
                 </div>
               </div>
             </div>
@@ -135,6 +135,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button id="modalSubmit" type="button" class="btn btn-secondary" onclick="saveSomething();">Save</button>
         </div>
       </div>
     </div>
@@ -158,7 +159,9 @@
     window.actionEvents = {
       "click .edit": function (e, value, row, index) {
         populateRecordModal(row);
-        $("#recordModal").modal("show");
+        $("#recordModal").addClass('editModal').removeClass('newModal').modal("show");
+        // Update Submit Button To Edit Record
+        $("#modalSubmit").attr("onclick","editSubmit();");
       },
       "click .delete": function (e, value, row, index) {
         if(confirm("Are you sure you want to delete "+row.id+" from the CMDB? This is irriversible.") == true) {
@@ -186,7 +189,9 @@
           icon: "bi bi-plus-lg",
           event: function() {
             // Clear all values from new record modal
-            $("#recordModal input").val("");
+            $("#recordModal input").val("").removeClass('changed');
+            // Update Submit Button To New Record
+            $("#modalSubmit").attr("onclick","newSubmit();");
             // Show new record modal
             $("#recordModal").modal("show");
           },
@@ -211,6 +216,85 @@
       $("#recordGateway").val(row.Gateway);
       $("#recordOS").val(row.OperatingSystem);
     }
+
+    function newSubmit() {
+      var formData = $("#recordForm .changed").serializeArray();
+      
+      // Include unchecked checkboxes in the formData
+      $("#recordForm input.changed[type=checkbox]").each(function() {
+          formData.push({ name: this.name, value: this.checked ? true : false });
+      });
+
+      var configData = {};
+      formData.forEach(function(item) { 
+          var keys = item.name.split("[").map(function(key) {
+              return key.replace("]","");
+          });
+          var temp = configData;
+          keys.forEach(function(key, index) {
+              if (index === keys.length - 1) {
+                  temp[key] = item.value;
+              } else {
+                  temp[key] = temp[key] || {};
+                  temp = temp[key];
+              }
+          });
+      });
+      queryAPI("POST","/api/plugin/cmdb/record",configData).done(function(data) {
+        if (data["result"] == "Success") {
+            toast(data["result"],"",data["message"],"success");
+            $("#cmdbTable").bootstrapTable('refresh');
+            $("#recordModal").modal("hide");
+        } else if (data["result"] == "Error") {
+            toast(data["result"],"",data["message"],"danger");
+        } else {
+            toast("API Error","","Failed to add new CMDB record","danger","30000");
+        }
+      });
+    }
+
+    function editSubmit() {
+      var id = $("#recordID").val();
+      var formData = $("#recordForm .changed").serializeArray();
+      
+      // Include unchecked checkboxes in the formData
+      $("#recordForm input.changed[type=checkbox]").each(function() {
+          formData.push({ name: this.name, value: this.checked ? true : false });
+      });
+
+      var configData = {};
+      formData.forEach(function(item) { 
+          var keys = item.name.split("[").map(function(key) {
+              return key.replace("]","");
+          });
+          var temp = configData;
+          keys.forEach(function(key, index) {
+              if (index === keys.length - 1) {
+                  temp[key] = item.value;
+              } else {
+                  temp[key] = temp[key] || {};
+                  temp = temp[key];
+              }
+          });
+      });
+      queryAPI("PATCH","/api/plugin/cmdb/record/"+id,configData).done(function(data) {
+        if (data["result"] == "Success") {
+            toast(data["result"],"",data["message"],"success");
+            $("#cmdbTable").bootstrapTable('refresh');
+            $("#recordModal").modal("hide");
+        } else if (data["result"] == "Error") {
+            toast(data["result"],"",data["message"],"danger");
+        } else {
+            toast("API Error","","Failed to edit CMDB record","danger","30000");
+        }
+      });
+    }
+
+    // Detect Changes
+    $(".info-field").change(function(elem) {
+      toast("Configuration","",$(elem.target.previousElementSibling).text()+" has changed.<br><small>Save configuration to apply changes.</small>","warning");
+      $(this).addClass("changed");
+    });
 
     // Initialize Table
     $("#cmdbTable").bootstrapTable();

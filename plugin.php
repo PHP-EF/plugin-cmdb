@@ -27,9 +27,14 @@ class cmdbPlugin extends ib {
 	  $this->createCMDBTable();
 	}
 
-	public function columnExists($columnName) {
+	public function getAllColumns() {
 		$result = $this->sql->query('PRAGMA table_info("cmdb")');
 		$Columns = $result->fetchAll(PDO::FETCH_ASSOC);
+		return $Columns;
+	}
+
+	public function columnExists($columnName) {
+		$Columns = $this->getAllColumns();
 		foreach ($Columns as $Column) {
 			if ($Column['name'] == $columnName) {
 				return true;
@@ -38,15 +43,19 @@ class cmdbPlugin extends ib {
 		return false;
 	}
 
-	public function addColumn($columnName,$dataType) {
-		$this->sql->exec("ALTER TABLE cmdb ADD COLUMN $columnName $dataType");
+	public function allColumnsExist($data) {
+		$columns = $this->getAllColumns();
+		foreach ($data as $key => $value) {
+		  if (!in_array($key,array_column($columns,"name"))) {
+			$this->api->setAPIResponse('Error',$key." does not exist in the database");
+			return false;
+		  }
+		}
+		return true;
 	}
 
-	public function getAllRecords() {
-		$dbquery = $this->sql->prepare("SELECT * FROM cmdb");
-        $dbquery->execute();
-		$records = $dbquery->fetchAll(PDO::FETCH_ASSOC);
-		return $records;
+	public function addColumn($columnName,$dataType) {
+		$this->sql->exec("ALTER TABLE cmdb ADD COLUMN $columnName $dataType");
 	}
 
 	private function createCMDBTable() {
@@ -76,6 +85,72 @@ class cmdbPlugin extends ib {
 			}
 		}
 	}
+
+	public function getAllRecords() {
+		$dbquery = $this->sql->prepare("SELECT * FROM cmdb");
+        $dbquery->execute();
+		$records = $dbquery->fetchAll(PDO::FETCH_ASSOC);
+		return $records;
+	}
+
+	public function getRecordById($id) {
+		$dbquery = $this->sql->prepare("SELECT * FROM cmdb WHERE id = :id");
+        $dbquery->execute([':id' => $id]);
+		$records = $dbquery->fetchAll(PDO::FETCH_ASSOC);
+		return $records;
+	}
+
+	public function updateRecord($id,$data) {
+	  // Check if all fields exist
+	  if ($this->allColumnsExist($data)) {
+		// Update fields if all exist
+		$updateFields = [];
+		foreach ($data as $key => $value) {
+			$updateFields[] = "$key = '$value'";
+		}
+		$prepare = "UPDATE cmdb SET " . implode(", ", $updateFields) . " WHERE id = :id";
+		$dbquery = $this->sql->prepare($prepare);
+		if ($dbquery->execute(['id' => $id])) {
+			$this->api->setAPIResponseMessage("CMDB record updated successfully");
+		} else {
+			$this->api->setAPIResponse('Error',$conn->lastErrorMsg());
+		}
+	  }
+	}
+
+	public function newRecord($data) {
+	  // Check if all fields exist
+	  if ($this->allColumnsExist($data)) {
+		// Prepare fields and values for insertion
+		$columns = implode(", ", array_keys($data));
+		$values = implode(", ", array_map(function($value) {
+			return "'$value'";
+		}, array_values($data)));
+		
+		$prepare = "INSERT INTO cmdb ($columns) VALUES ($values)";
+		$dbquery = $this->sql->prepare($prepare);
+		
+		if ($dbquery->execute()) {
+			$this->api->setAPIResponseMessage("CMDB record created successfully");
+		} else {
+			$this->api->setAPIResponse('Error', $this->sql->lastErrorMsg());
+		}
+	  }
+	}
+
+	public function deleteRecord($id) {
+		// Check if all fields exist
+		if ($this->getRecordById($id)) {
+		  $dbquery = $this->sql->prepare("DELETE FROM cmdb WHERE id = :id");
+		  if ($dbquery->execute([':id' => $id])) {
+			  $this->api->setAPIResponseMessage("CMDB record deleted successfully");
+		  } else {
+			  $this->api->setAPIResponse('Error', $this->sql->lastErrorMsg());
+		  }
+		} else {
+			$this->api->setAPIResponse("Error","CMDB record does not exist");
+		}
+	  }
 
 	public function _pluginGetSettings() {
 		return array(
