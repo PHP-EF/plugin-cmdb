@@ -78,24 +78,26 @@ class cmdbPlugin extends ib {
 	}
 
 	public function _pluginGetSettings() {
+		$roles = array_column($this->auth->getRBACRoles(),'name');
+		$roleKeyValuePairs = [];
+		$roleKeyValuePairs[] = [
+			"name" => "None",
+			"value" => ""
+		];
+		$roleKeyValuePairs = array_merge($roleKeyValuePairs,array_map(function($item) {
+			return [
+				"name" => $item,
+				"value" => $item
+			];
+		}, $roles));
 		return array(
-			'About' => array (
-				settingsOption('notice', '', ['title' => 'Information', 'body' => '
-				<p>This is an example plugin.</p>
-				<br/>']),
-			),
 			'Plugin Settings' => array(
-				settingsOption('password', 'Password', ['label' => 'Some Password']),
-				settingsOption('input', 'Config1', ['label' => 'Some option 1']),
-				settingsOption('input', 'Config2', ['label' => 'Some option 2']),
-				settingsOption('blank'),
-				settingsOption('input', 'Config3', ['label' => 'Some option 3']),
-				settingsOption('button', '', ['label' => 'Undo', 'icon' => 'fa fa-undo', 'text' => 'Retrieve', 'attr' => 'onclick="doSomething();"']),
+				settingsOption('select', 'ACL-READ', ['label' => 'CMDB Read ACL', 'options' => $roleKeyValuePairs]),
+				settingsOption('select', 'ACL-WRITE', ['label' => 'CMDB Write ACL', 'options' => $roleKeyValuePairs]),
 			),
-			'Connection Settings' => array(
+			'Ansible Settings' => array(
 				settingsOption('url', 'URL', ['label' => 'Ansible AWX URL']),
-				settingsOption('password-alt', 'Token', ['label' => 'Ansible AWX Token']),
-				settingsOption('select', 'Server', ['label' => 'Preferred Server', 'options' => array(array("name" => 'Option 1', "value" => 'opt1'),array("name" => 'Option 2', "value" => 'opt2'))]),
+				settingsOption('password-alt', 'Token', ['label' => 'Ansible AWX Token'])
 			),
 		);
 	}

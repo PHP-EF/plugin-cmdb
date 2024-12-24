@@ -15,7 +15,7 @@ $app->get('/plugin/cmdb/settings', function ($request, $response, $args) {
 
 $app->get('/plugin/cmdb/records', function ($request, $response, $args) {
 	$cmdbPlugin = new cmdbPlugin();
-	if ($cmdbPlugin->auth->checkAccess('CMDB-READ')) {
+	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-READ'])) {
         $cmdbPlugin->api->setAPIResponseData($cmdbPlugin->getAllRecords());
 	}
 	$response->getBody()->write(jsonE($GLOBALS['api']));

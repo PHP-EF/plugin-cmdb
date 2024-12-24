@@ -1,6 +1,6 @@
 <?php
   $cmdbPlugin = new cmdbPlugin();
-  if ($cmdbPlugin->auth->checkAccess("CMDB-READ") == false) {
+  if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-READ']) == false) {
     die();
   }
   return <<<EOF
@@ -10,8 +10,8 @@
         <div class="card">
           <div class="card-body">
             <center>
-              <h4>Example Page</h4>
-              <p>Some description.</p>
+              <h4>CMDB</h4>
+              <p>A CMDB.</p>
             </center>
           </div>
         </div>
@@ -214,7 +214,5 @@
 
     // Initialize Table
     $("#cmdbTable").bootstrapTable();
-
-
   </script>
 EOF;
