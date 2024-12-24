@@ -73,7 +73,7 @@
   </section>
 
 
-  // Record Modal
+  <!-- Record Modal -->
   <div class="modal fade" id="recordModal" tabindex="-1" role="dialog" aria-labelledby="recordModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
       <div class="modal-content">
@@ -142,7 +142,6 @@
 
 
   <script>
-
     // CMDB Row Actions Buttons
     function actionFormatter(value, row, index) {
       return [
