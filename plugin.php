@@ -101,19 +101,22 @@ class cmdbPlugin extends ib {
 	}
 
 	public function updateRecord($id,$data) {
-	  // Check if all fields exist
-	  if ($this->allColumnsExist($data)) {
-		// Update fields if all exist
-		$updateFields = [];
-		foreach ($data as $key => $value) {
+      // Check if all record exists
+	  if ($this->getRecordById($id)) {
+		// Check if all fields exist
+		if ($this->allColumnsExist($data)) {
+		  // Update fields if all exist
+		  $updateFields = [];
+		  foreach ($data as $key => $value) {
 			$updateFields[] = "$key = '$value'";
-		}
-		$prepare = "UPDATE cmdb SET " . implode(", ", $updateFields) . " WHERE id = :id";
-		$dbquery = $this->sql->prepare($prepare);
-		if ($dbquery->execute(['id' => $id])) {
+		  }
+		  $prepare = "UPDATE cmdb SET " . implode(", ", $updateFields) . " WHERE id = :id";
+		  $dbquery = $this->sql->prepare($prepare);
+		  if ($dbquery->execute(['id' => $id])) {
 			$this->api->setAPIResponseMessage("CMDB record updated successfully");
-		} else {
-			$this->api->setAPIResponse('Error',$conn->lastErrorMsg());
+		  } else {
+		    $this->api->setAPIResponse('Error',$conn->lastErrorMsg());
+		  }
 		}
 	  }
 	}
@@ -139,7 +142,7 @@ class cmdbPlugin extends ib {
 	}
 
 	public function deleteRecord($id) {
-		// Check if all fields exist
+		// Check if all record exists
 		if ($this->getRecordById($id)) {
 		  $dbquery = $this->sql->prepare("DELETE FROM cmdb WHERE id = :id");
 		  if ($dbquery->execute([':id' => $id])) {
@@ -150,7 +153,7 @@ class cmdbPlugin extends ib {
 		} else {
 			$this->api->setAPIResponse("Error","CMDB record does not exist");
 		}
-	  }
+	}
 
 	public function _pluginGetSettings() {
 		return array(
