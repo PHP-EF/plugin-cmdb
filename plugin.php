@@ -78,22 +78,11 @@ class cmdbPlugin extends ib {
 	}
 
 	public function _pluginGetSettings() {
-		$roles = array_column($this->auth->getRBACRoles(),'name');
-		$roleKeyValuePairs = [];
-		$roleKeyValuePairs[] = [
-			"name" => "None",
-			"value" => ""
-		];
-		$roleKeyValuePairs = array_merge($roleKeyValuePairs,array_map(function($item) {
-			return [
-				"name" => $item,
-				"value" => $item
-			];
-		}, $roles));
+		$roles = $this->auth->getRBACRolesForMenu();
 		return array(
 			'Plugin Settings' => array(
-				settingsOption('select', 'ACL-READ', ['label' => 'CMDB Read ACL', 'options' => $roleKeyValuePairs]),
-				settingsOption('select', 'ACL-WRITE', ['label' => 'CMDB Write ACL', 'options' => $roleKeyValuePairs]),
+				settingsOption('select', 'ACL-READ', ['label' => 'CMDB Read ACL', 'options' => $roles]),
+				settingsOption('select', 'ACL-WRITE', ['label' => 'CMDB Write ACL', 'options' => $roles]),
 			),
 			'Ansible Settings' => array(
 				settingsOption('url', 'URL', ['label' => 'Ansible AWX URL']),
