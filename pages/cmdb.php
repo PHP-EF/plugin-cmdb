@@ -3,7 +3,7 @@
   if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-READ']) == false) {
     die();
   }
-  return <<<EOF
+  $content = '
   <section class="section">
     <div class="row">
       <div class="col-lg-12">
@@ -146,12 +146,16 @@
     // CMDB Row Actions Buttons
     function actionFormatter(value, row, index) {
       return [
-        `<a class="edit" title="Edit">`,
-        `<i class="fa fa-pencil"></i>`,
-        `</a>&nbsp;`,
-        `<a class="delete" title="Delete">`,
-        `<i class="fa fa-trash"></i>`,
-        "</a>"
+        ';
+        if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-WRITE'])) { $content .= '
+          `<a class="edit" title="Edit">`,
+          `<i class="fa fa-pencil"></i>`,
+          `</a>&nbsp;`,
+          `<a class="delete" title="Delete">`,
+          `<i class="fa fa-trash"></i>`,
+          "</a>"
+        ';}
+        $content .= '
       ].join("")
     }
 
@@ -159,7 +163,7 @@
     window.actionEvents = {
       "click .edit": function (e, value, row, index) {
         populateRecordModal(row);
-        $("#recordModal").addClass('editModal').removeClass('newModal').modal("show");
+        $("#recordModal").addClass("editModal").removeClass("newModal").modal("show");
         // Update Submit Button To Edit Record
         $("#modalSubmit").attr("onclick","editSubmit();");
       },
@@ -168,7 +172,7 @@
           queryAPI("DELETE","/api/plugin/cmdb/record/"+row.id).done(function(data) {
             if (data["result"] == "Success") {
               toast(data["result"],"",data["message"],"success");
-              $("#cmdbTable").bootstrapTable('refresh');
+              $("#cmdbTable").bootstrapTable("refresh");
             } else if (data["result"] == "Error") {
               toast(data["result"],"",data["message"],"danger","30000");
             } else {
@@ -184,12 +188,15 @@
     // CMDB Table Buttons
     function cmdbButtons() {
       return {
+        ';
+        // Check if user has Write Permission and display add button
+        if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-WRITE'])) { $content .= '
         btnAddRecord: {
           text: "Add Record",
           icon: "bi bi-plus-lg",
           event: function() {
             // Clear all values from new record modal
-            $("#recordModal input").val("").removeClass('changed');
+            $("#recordModal input").val("").removeClass("changed");
             // Update Submit Button To New Record
             $("#modalSubmit").attr("onclick","newSubmit();");
             // Show new record modal
@@ -199,7 +206,8 @@
             title: "Add a CMDB record",
             style: "background-color:#4bbe40;border-color:#4bbe40;"
           }
-        }
+        }';}
+        $content .= '
       }
     }
 
@@ -243,7 +251,7 @@
       queryAPI("POST","/api/plugin/cmdb/record",configData).done(function(data) {
         if (data["result"] == "Success") {
             toast(data["result"],"",data["message"],"success");
-            $("#cmdbTable").bootstrapTable('refresh');
+            $("#cmdbTable").bootstrapTable("refresh");
             $("#recordModal").modal("hide");
         } else if (data["result"] == "Error") {
             toast(data["result"],"",data["message"],"danger");
@@ -280,7 +288,7 @@
       queryAPI("PATCH","/api/plugin/cmdb/record/"+id,configData).done(function(data) {
         if (data["result"] == "Success") {
             toast(data["result"],"",data["message"],"success");
-            $("#cmdbTable").bootstrapTable('refresh');
+            $("#cmdbTable").bootstrapTable("refresh");
             $("#recordModal").modal("hide");
         } else if (data["result"] == "Error") {
             toast(data["result"],"",data["message"],"danger");
@@ -299,4 +307,5 @@
     // Initialize Table
     $("#cmdbTable").bootstrapTable();
   </script>
-EOF;
+';
+return $content;

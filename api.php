@@ -26,7 +26,7 @@ $app->get('/plugin/cmdb/records', function ($request, $response, $args) {
 // Create New CMDB Record
 $app->post('/plugin/cmdb/record', function ($request, $response, $args) {
 	$cmdbPlugin = new cmdbPlugin();
-    if ($cmdbPlugin->auth->checkAccess("ADMIN-CONFIG")) {
+    if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-WRITE'])) {
         $data = $cmdbPlugin->api->getAPIRequestData($request);
         // Create the CMDB record with the submitted data
         $cmdbPlugin->newRecord($data);
@@ -40,7 +40,7 @@ $app->post('/plugin/cmdb/record', function ($request, $response, $args) {
 // Update CMDB Record
 $app->patch('/plugin/cmdb/record/{id}', function ($request, $response, $args) {
 	$cmdbPlugin = new cmdbPlugin();
-    if ($cmdbPlugin->auth->checkAccess("ADMIN-CONFIG")) {
+    if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-WRITE'])) {
         $data = $cmdbPlugin->api->getAPIRequestData($request);
         // Update the CMDB record values with the submitted data
         $cmdbPlugin->updateRecord($args['id'], $data);
@@ -55,7 +55,7 @@ $app->patch('/plugin/cmdb/record/{id}', function ($request, $response, $args) {
 // Delete CMDB Record
 $app->delete('/plugin/cmdb/record/{id}', function ($request, $response, $args) {
 	$cmdbPlugin = new cmdbPlugin();
-    if ($cmdbPlugin->auth->checkAccess("ADMIN-CONFIG")) {
+    if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-WRITE'])) {
         // Delete the CMDB Record
         $cmdbPlugin->deleteRecord($args['id']);
     }
