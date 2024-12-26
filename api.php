@@ -253,6 +253,8 @@ $app->patch('/plugin/cmdb/section/{id}/weight', function ($request, $response, $
 		->withStatus($GLOBALS['responseCode']);
 });
 
+// ** DB REBUILD ** //
+
 // Check If DB Rebuild Required
 $app->get('/plugin/cmdb/dbRebuild', function ($request, $response, $args) {
 	$cmdbPlugin = new cmdbPlugin();
@@ -272,6 +274,67 @@ $app->post('/plugin/cmdb/dbRebuild/initiate', function ($request, $response, $ar
 	$cmdbPlugin = new cmdbPlugin();
 	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-ADMIN'])) {
 		$cmdbPlugin->updateCMDBColumns(true);
+	}
+	$response->getBody()->write(jsonE($GLOBALS['api']));
+	return $response
+		->withHeader('Content-Type', 'application/json;charset=UTF-8')
+		->withStatus($GLOBALS['responseCode']);
+});
+
+// ** ANSIBLE ** //
+//  Return list of Ansible Job Templates
+$app->get('/plugin/cmdb/ansible/templates', function ($request, $response, $args) {
+	$cmdbPlugin = new cmdbPluginAnsible();
+	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-JOB'])) {
+		$data = $request->getQueryParams();
+		$Label = $data['label'] ?? null;
+		$Id = $data['id'] ?? null;
+		$cmdbPlugin->GetAnsibleJobTemplate($Id,$Label);
+	}
+	$response->getBody()->write(jsonE($GLOBALS['api']));
+	return $response
+		->withHeader('Content-Type', 'application/json;charset=UTF-8')
+		->withStatus($GLOBALS['responseCode']);
+});
+
+//  Return list of Ansible Jobs
+$app->get('/plugin/cmdb/ansible/jobs', function ($request, $response, $args) {
+	$cmdbPlugin = new cmdbPluginAnsible();
+	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-JOB'])) {
+		$cmdbPlugin->GetAnsibleJobs();
+	}
+	$response->getBody()->write(jsonE($GLOBALS['api']));
+	return $response
+		->withHeader('Content-Type', 'application/json;charset=UTF-8')
+		->withStatus($GLOBALS['responseCode']);
+});
+
+// Submit Ansible Job
+$app->post('/plugin/cmdb/ansible/job', function ($request, $response, $args) {
+	$cmdbPlugin = new cmdbPlugin();
+    if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-JOB'])) {
+		$data = $request->getQueryParams();
+		$DataArray = array(
+			"extra_vars" => array()
+		);
+		foreach ($data as $ReqVar => $ReqKey) {
+			if ($ReqVar != "function" && $ReqVar != "jobid") {
+				$DataArray['extra_vars'][$ReqVar] = $ReqKey;
+			}
+		}
+		$JsonData = json_encode($DataArray,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES);
+		$result = $this->SubmitAnsibleJob($data['jobid'], $DataArray);
+		$DebugArr = array(
+			"request" => $data,
+			"response" => $result
+		);
+		if (isset($result->job)) {
+			$this->writeLog("Ansible","Submitted Ansible Job.","info",$DebugArr);
+			$this->api->setAPIResponseData($result);
+		} else {
+			$this->api->setAPIResponse('Error','Error submitting ansible job. Check logs.');
+			$this->writeLog("Ansible","Error submitting ansible Job.","error",$DebugArr);
+		}
 	}
 	$response->getBody()->write(jsonE($GLOBALS['api']));
 	return $response

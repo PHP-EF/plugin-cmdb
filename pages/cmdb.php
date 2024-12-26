@@ -52,7 +52,9 @@
           <form id="recordForm">
           </form>
         </div>
-        <div class="modal-footer">
+        <div class="modal-footer">';
+          if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-JOB'])) { $content .= '
+          <button type="button" class="btn btn-info" id="runJob">Run Job</button>';} $content .= '
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
           <button id="modalSubmit" type="button" class="btn btn-success" onclick="saveSomething();">Save</button>
         </div>
@@ -162,6 +164,34 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
           <button type="button" class="btn btn-success" data-bs-dismiss="modal" id="columnSubmit">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ansible Job Select Modal -->
+  <div class="modal fade" id="ansibleJobSelectModal" tabindex="-1" role="dialog" aria-labelledby="ansibleJobSelectLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="columnModalLabel">Ansible - Job Select</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true"></span>
+          </button>
+        </div>
+        <div class="modal-body" id="ansibleJobSelectModalBody">
+          <div class="overlay"></div>
+            <p>Select an Ansible Job to run from the list below.</p>
+            <div class="alert alert-primary" role="alert">
+            <h4 class="alert-heading">Templates</h4>
+            <select class="form-select" id="ansibleJobs"></select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <div id="jobOutput" role="alert" style="width:100%;"></div>';
+          if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-JOB']) == false) { $content .= '
+          <button type="button" class="btn btn-success" id="submitJob">Submit Job</button>';} $content .= '
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         </div>
       </div>
     </div>
@@ -854,6 +884,69 @@
         });
       }
     }
+
+    $("#runJob").on("click", function(event) {
+      $("#ansibleJobs").empty();
+      $("#jobOutput").empty().removeClass("alert");
+      queryAPI("GET","/api/plugin/cmdb/ansible/templates").done(function(data) {
+        if (data["result"] == "Success") {
+          $.each(data.data, function() {
+            $("#ansibleJobs").append("<option value="+this.id+">"+this.description+"</option>");
+          });
+          $("#ansibleJobSelectModal").modal("show");
+        } else if (data["result"] == "Error") {
+            toast(data["result"],"",data["message"],"danger");
+        } else {
+            toast("API Error","","Failed to query list of Ansible Job Templates","danger","30000");
+        }
+      }).fail(function() {
+          toast("API Error","","Failed to query list of Ansible Job Templates","danger","30000");
+      });
+    });
+
+    $("#submitJob").on("click", function(event) {
+      $("#jobOutput").empty().removeClass("alert alert-success alert-danger");
+      var jobId = $("#ansibleJobs").find(":selected").val();
+      $("#ansibleJobs").on("change", function(elem) {
+        jobId = $("#ansibleJobs").find(":selected").val();
+      });
+
+      var formData = $("#recordForm").serializeArray();
+      
+      // Include unchecked checkboxes in the formData
+      $("#recordForm input[type=checkbox]").each(function() {
+          formData.push({ name: this.name, value: this.checked ? true : false });
+      });
+
+      var configData = {};
+      formData.forEach(function(item) { 
+          var keys = item.name.split("[").map(function(key) {
+              return key.replace("]","");
+          });
+          var temp = configData;
+          keys.forEach(function(key, index) {
+              if (index === keys.length - 1) {
+                  temp[key] = item.value;
+              } else {
+                  temp[key] = temp[key] || {};
+                  temp = temp[key];
+              }
+          });
+      });
+      
+      $queryAPI("POST","/plugin/cmdb/ansible/job",configData).done(function(data) {
+        var ansibleJob = data.data;
+        if (ansibleJob.job) {
+          $("#jobOutput").append(`<p>Job "+ansibleJob.id+" started successfully. Click <a href="'; $content .= $cmdbPlugin->config->get("Plugins","cmdb")["Ansible-URL"]; $content .= '/#/jobs/playbook/"+ansibleJob.id+"/output" target="_blank">here</a> to view the Job in Ansible</p>`);
+          $("#jobOutput").addClass("alert alert-success");
+        } else {
+          $("#jobOutput").append("<p>Job failed to start. See below for more information.</p>");
+          $("#jobOutput").append("<pre>"+JSON.stringify(ansibleJob,null,2)+"</pre>");
+          $("#jobOutput").addClass("alert alert-danger");
+        }
+        console.log(ansibleJob);
+      });
+    });
   </script>
 ';
 return $content;

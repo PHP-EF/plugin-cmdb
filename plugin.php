@@ -74,7 +74,7 @@ class cmdbPlugin extends ib {
 			section INTEGER,
 			visible BOOLEAN,
 			weight INTEGER,
-			columnName TEXT,
+			columnName TEXT UNIQUE,
 			FOREIGN KEY (section) REFERENCES cmdb_sections(id)
 		)");
 
@@ -277,17 +277,25 @@ class cmdbPlugin extends ib {
 
 	// Add new column definition to CMDB Columns Table
 	public function addColumnDefinition($columnName,$name,$columnDescription,$dataType,$fieldType,$SectionID,$Visible,$Weight = null) {
-		if ($Weight) {
-			$dbquery = $this->sql->prepare("INSERT INTO cmdb_columns (columnName, name, description, dataType, fieldType, section, visible, weight) VALUES (:columnName, :name, :description, :dataType, :fieldType, :section, :visible, :weight);");
-			$execute = [":columnName" => $columnName,":name" => $name,":description" => $columnDescription, ":dataType" => $dataType, ":fieldType" => $fieldType, ":section" => $SectionID, ":visible" => $Visible, ":weight" => $Weight];
+		$dbquery = $this->sql->prepare('SELECT EXISTS (SELECT 1 FROM cmdb_columns WHERE columnName = :columnName OR name = :name COLLATE NOCASE);');
+		$dbquery->execute([":columnName" => $columnName,":name" => $name]);
+		$results = $dbquery->fetchColumn() > 0;
+		if (!$results) {
+			if ($Weight) {
+				$dbquery = $this->sql->prepare("INSERT INTO cmdb_columns (columnName, name, description, dataType, fieldType, section, visible, weight) VALUES (:columnName, :name, :description, :dataType, :fieldType, :section, :visible, :weight);");
+				$execute = [":columnName" => $columnName,":name" => $name,":description" => $columnDescription, ":dataType" => $dataType, ":fieldType" => $fieldType, ":section" => $SectionID, ":visible" => $Visible, ":weight" => $Weight];
+			} else {
+				$dbquery = $this->sql->prepare("INSERT INTO cmdb_columns (columnName, name, description, dataType, fieldType, section, visible, weight) VALUES (:columnName, :name, :description, :dataType, :fieldType, :section, :visible, (SELECT IFNULL(MAX(weight), 0) + 1 FROM cmdb_columns WHERE section = :section));");
+				$execute = [":columnName" => $columnName,":name" => $name,":description" => $columnDescription, ":dataType" => $dataType, ":fieldType" => $fieldType, ":section" => $SectionID, ":visible" => $Visible];
+			}
+			if ($dbquery->execute($execute)) {
+				$this->api->setAPIResponseMessage('Successfully added column');
+				$this->updateCMDBColumns();
+				return true;
+			}
 		} else {
-			$dbquery = $this->sql->prepare("INSERT INTO cmdb_columns (columnName, name, description, dataType, fieldType, section, visible, weight) VALUES (:columnName, :name, :description, :dataType, :fieldType, :section, :visible, (SELECT IFNULL(MAX(weight), 0) + 1 FROM cmdb_columns WHERE section = :section));");
-			$execute = [":columnName" => $columnName,":name" => $name,":description" => $columnDescription, ":dataType" => $dataType, ":fieldType" => $fieldType, ":section" => $SectionID, ":visible" => $Visible];
-		}
-		if ($dbquery->execute($execute)) {
-			$this->api->setAPIResponseMessage('Successfully added column');
-			$this->updateCMDBColumns();
-			return true;
+			$this->api->setAPIResponse('Error','Column already exists');
+			return false;
 		}
 		$this->api->setAPIResponse('Error','Failed to add column');
 		return false;
@@ -576,12 +584,116 @@ class cmdbPlugin extends ib {
 			'Plugin Settings' => array(
 				$this->settingsOption('auth', 'ACL-READ', ['label' => 'CMDB Read ACL']),
 				$this->settingsOption('auth', 'ACL-WRITE', ['label' => 'CMDB Write ACL']),
-				$this->settingsOption('auth', 'ACL-ADMIN', ['label' => 'CMDB Admin ACL'])
+				$this->settingsOption('auth', 'ACL-ADMIN', ['label' => 'CMDB Admin ACL']),
+				$this->settingsOption('auth', 'ACL-JOB', ['label' => 'Grants access to use Ansible Integration'])
 			),
 			'Ansible Settings' => array(
-				$this->settingsOption('url', 'URL', ['label' => 'Ansible AWX URL']),
-				$this->settingsOption('password-alt', 'Token', ['label' => 'Ansible AWX Token'])
+				$this->settingsOption('url', 'Ansible-URL', ['label' => 'Ansible AWX URL']),
+				$this->settingsOption('token', 'Ansible-Token', ['label' => 'Ansible AWX Token']),
+				$this->settingsOption('select', 'Ansible-Tag', ['label' => 'The tag to use when filtering available jobs'])
 			),
 		);
+	}
+}
+
+class cmdbPluginAnsible extends cmdbPlugin {
+	public function __construct() {
+	  parent::__construct();
+	}
+
+	public function QueryAnsible($Method, $Uri, $Data = "") {
+		$cmdbConfig = $this->config->get("Plugins","cmdb");
+		$AnsibleApiKey = $cmdbConfig["Ansible-Token"] ?? null;
+		$AnsibleUrl = $cmdbConfig['Ansible-URL'] ?? null;
+
+		if (!$AnsibleApiKey) {
+			$this->api->setAPIResponse('Error','Ansible API Key Missing');
+			return false;
+		}
+
+		if (!$AnsibleUrl) {
+			$this->api->setAPIResponse('Error','Ansible URL Missing');
+			return false;
+		}
+	
+		$AnsibleHeaders = array(
+		 'Authorization' => "Bearer $AnsibleApiKey",
+		 'Content-Type' => "application/json"
+		);
+	
+		if (strpos($Uri,$AnsibleUrl."/api/") === FALSE) {
+		  $Url = $AnsibleUrl."/api/v2/".$Uri;
+		} else {
+		  $Url = $Uri;
+		}
+	
+		$Options = array(
+		  'timeout' => $this->config->get("System","CURL-Timeout"),
+		  'connect_timeout' => $this->config->get("System","CURL-ConnectTimeout"),
+		  'verify' => false
+		);
+	
+		switch ($Method) {
+		  case 'get':
+			$Result = WpOrg\Requests\Requests::get($Url, $AnsibleHeaders, $Options);
+			break;
+		  case 'post':
+			$Result = WpOrg\Requests\Requests::post($Url, $AnsibleHeaders, json_encode($Data,JSON_UNESCAPED_SLASHES), $Options);
+			break;
+		  case 'put':
+			$Result = WpOrg\Requests\Requests::put($Url, $AnsibleHeaders, json_encode($Data,JSON_UNESCAPED_SLASHES), $Options);
+			break;
+		  case 'patch':
+			$Result = WpOrg\Requests\Requests::patch($Url, $AnsibleHeaders, json_encode($Data,JSON_UNESCAPED_SLASHES), $Options);
+			break;
+		  case 'delete':
+			$Result = WpOrg\Requests\Requests::delete($Url, $AnsibleHeaders, $Options);
+			break;
+		}
+		if ($Result->status_code == "401") {
+		  $this->api->setAPIResponse('Error','Ansible API Key incorrect or expired');
+		  $this->writeLog("Ansible","Error. Ansible API Key incorrect or expired.","error");
+		  return false;
+		}
+		if ($Result) {
+		  return $Result->body;
+		  $Output = json_decode($Result->body);
+		  return $Output;
+		} else {
+			$this->api->setAPIResponse('Warning','No results returned from the API');
+		}
+	}
+	
+	public function GetAnsibleJobTemplate($id = null,$label = null) {
+	  $Filters = array();
+	  $AnsibleTag = $this->config->get("Plugins","cmdb")['Ansible-Tag'] ?? null;
+	  if ($label) {
+		array_push($Filters, "labels__name__icontains=$label");
+	  } elseif ($AnsibleTag) {
+		array_push($Filters, "labels__name__icontains=$AnsibleTag");
+	  }
+	  if ($Filters) {
+		$filter = combineFilters($Filters);
+	  }
+	  if ($id) {
+		$Result = $this->QueryAnsible("get", "job_templates/".$id."/");
+	  } else if ($filter) {
+		$Result = $this->QueryAnsible("get", "job_templates/?".$filter);
+	  } else {
+		$Result = $this->QueryAnsible("get", "job_templates");
+	  }
+	  if ($Result) {
+		$this->api->setAPIResponseData($Result->results);
+	  }
+	}
+	
+	public function GetAnsibleJobs($id = null) {
+	  $Result = $this->QueryAnsible("get", "jobs");
+	  return $Result->results;
+	}
+	
+	public function SubmitAnsibleJob($id,$data) {
+	  $Result = $this->QueryAnsible("post", "job_templates/".$id."/launch/", $data);
+	  return $Result;
 	}
 }
