@@ -257,10 +257,21 @@ $app->patch('/plugin/cmdb/section/{id}/weight', function ($request, $response, $
 $app->get('/plugin/cmdb/dbRebuild', function ($request, $response, $args) {
 	$cmdbPlugin = new cmdbPlugin();
 	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-ADMIN'])) {
-		$dbrebuild = $cmdbPlugin->rebuildRequired();
-		if ($dbrebuild) {
+		if ($cmdbPlugin->rebuildRequired()) {
 			$cmdbPlugin->api->setAPIResponse('Warning','Database rebuild required to remove old columns.');
 		}
+	}
+	$response->getBody()->write(jsonE($GLOBALS['api']));
+	return $response
+		->withHeader('Content-Type', 'application/json;charset=UTF-8')
+		->withStatus($GLOBALS['responseCode']);
+});
+
+// Check If DB Rebuild Required
+$app->post('/plugin/cmdb/dbRebuild/initiate', function ($request, $response, $args) {
+	$cmdbPlugin = new cmdbPlugin();
+	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-ADMIN'])) {
+		$cmdbPlugin->updateCMDBColumns(true);
 	}
 	$response->getBody()->write(jsonE($GLOBALS['api']));
 	return $response

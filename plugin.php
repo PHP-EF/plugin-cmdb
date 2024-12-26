@@ -130,29 +130,39 @@ class cmdbPlugin extends ib {
 
 	// Rebuild Required
 	public function rebuildRequired($val = null) {
-		if ($val != null) {
+		if ($val !== null) {
 			if ($val === true) {
 				$value = "true";
-			} elseif ($val === false) {
+			} elseif ($val == false) {
 				$value = "false";
 			}
 			$this->sql->exec('UPDATE misc SET value = "'.$value.'" WHERE key = "rebuildRequired"');
 		} else {
 			$stmt = $this->sql->prepare('SELECT * FROM misc WHERE key = :key');
 			$stmt->execute([':key' => 'rebuildRequired']);
-			return $stmt->fetch();
+			$results = $stmt->fetch();
+			if ($results['value'] == "true") {
+				return true;
+			} elseif ($results['value'] == "false") {
+				return false;
+			}
 		}
 	}
 
 	// Update CMDB Columns
-	private function updateCMDBColumns($rebuild = false) {
+	public function updateCMDBColumns($rebuild = false) {
 		// Decode JSON data
 		$columns = $this->getColumnDefinitions();
+		$definedColumns = $this->getDefinedColumns();
 
 		// Get current columns in the cmdb table
-		$current_columns = $this->getDefinedColumns();
+		$current_columns = [];
 
-		// Create a set of columns from the JSON data
+		foreach ($definedColumns as $currentColumn) {
+			$current_columns[$currentColumn['name']] = $currentColumn['type'];
+		}
+		
+		// Create a set of columns from the cmdb_columns table
 		$latest_columns = [];
 		foreach ($columns as $column) {
 			$latest_columns[$column['columnName']] = $column['dataType'];
@@ -160,27 +170,47 @@ class cmdbPlugin extends ib {
 
 		// Add new columns
 		foreach ($latest_columns as $column => $data_type) {
-			if (!in_array($column, array_column($current_columns,'name'))) {
-				$this->sql->exec("ALTER TABLE cmdb ADD COLUMN $column $data_type");
+			if (!array_key_exists($column, $current_columns)) {
+				if (!$this->sql->query("ALTER TABLE cmdb ADD COLUMN $column $data_type")) {
+					$this->api->setAPIResponse('Error', 'Failed to add new column: ' . $column);
+					return false;
+				}
 			}
 		}
 
 		if ($rebuild) {
-			// Remove old columns
-			foreach ($current_columns as $column) {
-				if (!array_key_exists($column, $json_columns)) {
-					// SQLite does not support DROP COLUMN directly, so you need to recreate the table without the column
-					// This is a simplified example, you might need to handle data migration
-					// Create a new table without the column
-					$this->sql->exec("CREATE TABLE cmdb_new AS SELECT * FROM cmdb WHERE 1=0");
-					foreach ($latest_columns as $new_column => $data_type) {
-						$this->sql->exec("ALTER TABLE cmdb_new ADD COLUMN $new_column $data_type");
+			// Collect columns to keep
+			$columns_to_keep = array_intersect_key($current_columns, $latest_columns);
+			// Check if there are columns to remove
+			if (count($columns_to_keep) < count($current_columns)) {
+				// Create a new table with the desired columns
+				$create_table_sql = "CREATE TABLE cmdb_new (" . implode(", ", array_map(function($col, $type) {
+					return "$col $type";
+				}, array_keys($columns_to_keep), $columns_to_keep)) . ")";
+				if ($this->sql->query($create_table_sql)) {
+					// Copy data from the old table to the new table
+					$columns_list = implode(", ", array_keys($columns_to_keep));
+					if ($this->sql->query("INSERT INTO cmdb_new ($columns_list) SELECT $columns_list FROM cmdb")) {
+						// Replace the old table with the new table
+						if ($this->sql->query("DROP TABLE cmdb")) {
+							if ($this->sql->query("ALTER TABLE cmdb_new RENAME TO cmdb")) {
+								$this->rebuildRequired(false);
+								$this->api->setAPIResponseMessage('Successfully rebuilt database');
+							} else {
+								$this->api->setAPIResponse('Error','Failed to rename database');
+							}
+						} else {
+							$this->api->setAPIResponse('Error','Failed to drop old database');
+						}
+					} else {
+						$this->api->setAPIResponse('Error','Failed to clone current database');
 					}
-					$this->sql->exec("INSERT INTO cmdb_new SELECT * FROM cmdb");
-					$this->sql->exec("DROP TABLE cmdb");
-					$this->sql->exec("ALTER TABLE cmdb_new RENAME TO cmdb");
-					break;
+				} else {
+					$this->api->setAPIResponse('Error','Failed to create temporary database');
 				}
+			} else {
+				$this->api->setAPIResponseMessage('Rebuild is not required');
+				$this->rebuildRequired(false);
 			}
 		}
 	}

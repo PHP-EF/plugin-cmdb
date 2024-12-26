@@ -168,6 +168,17 @@
   </div>
 
   <script>
+    // Function to check if database requires rebuild
+    var rebuildRequired = false;
+    queryAPI("GET","/api/plugin/cmdb/dbRebuild").done(function(data) {
+      if (data["result"] == "Warning") {
+        toast(data["result"],"",data["message"],"warning","30000");
+        rebuildRequired = true;
+      } else {
+        rebuildRequired = false
+      }
+    });
+
     // Function to build the CMDB Sections Table
     function buildSectionsTable() {
       $("#sectionsTable").bootstrapTable({
@@ -489,7 +500,8 @@
             style: "background-color:#4bbe40;border-color:#4bbe40;"
           }
         },';}
-        if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-ADMIN'])) { $content .= '
+        if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-ADMIN'])) {
+          $content .= '
           btnEditColumns: {
             text: "Edit Columns",
             icon: "bi-layout-text-window",
@@ -501,7 +513,22 @@
               title: "Edit The CMDB Columns",
               style: "background-color:#9e3ee3;border-color:#9e3ee3;"
             }
-          }';}
+          },';
+          if ($cmdbPlugin->rebuildRequired()) {
+            $content .= '
+            btnRebuildDB: {
+              text: "Rebuild Database",
+              icon: "bi-arrow-clockwise",
+              event: function() {
+                rebuildDB();
+              },
+              attributes: {
+                title: "Rebuild The CMDB Database to apply changes",
+                style: "background-color:#ffb01c;border-color:#ffb01c;"
+              }
+            }';
+          }
+        }
         $content .= '
       }
     }
@@ -811,11 +838,22 @@
       });
     }
 
-    queryAPI("GET","/api/plugin/cmdb/dbRebuild").done(function(data) {
-      if (data["result"] == "Warning") {
-        toast(data["result"],"",data["message"],"warning","30000");
+    function rebuildDB() {
+      if(confirm("Are you sure you want to initiate a database rebuild? This will purge data from removed columns and is irreversible.") == true) {
+        queryAPI("POST","/api/plugin/cmdb/dbRebuild/initiate").done(function(data) {
+          if (data["result"] == "Success") {
+              toast(data["result"],"",data["message"],"success");
+              $(`*[name="btnRebuildDB"]`).attr("hidden",true);
+          } else if (data["result"] == "Error") {
+              toast(data["result"],"",data["message"],"danger");
+          } else {
+              toast("API Error","","Failed to initiate database rebuild","danger","30000");
+          }
+        }).fail(function() {
+          toast("API Error","","Failed to initiate database rebuild","danger","30000");
+        });
       }
-    });
+    }
   </script>
 ';
 return $content;
