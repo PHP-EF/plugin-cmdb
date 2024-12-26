@@ -32,10 +32,10 @@ class cmdbPlugin extends ib {
 		if ($this->sql) {
 			try {
 				// Query to check if both tables exist
-				$result = $this->sql->query("SELECT name FROM sqlite_master WHERE type='table' AND name IN ('cmdb', 'cmdb_columns', 'cmdb_sections')");
+				$result = $this->sql->query("SELECT name FROM sqlite_master WHERE type='table' AND name IN ('cmdb', 'cmdb_columns', 'cmdb_sections', 'misc')");
 				$tables = $result->fetchAll(PDO::FETCH_COLUMN);
 			
-				if (in_array('cmdb', $tables) && in_array('cmdb_columns', $tables) && in_array('cmdb_sections', $tables)) {
+				if (in_array('cmdb', $tables) && in_array('cmdb_columns', $tables) && in_array('cmdb_sections', $tables) && in_array('misc', $tables)) {
 					return true;
 				} else {
 					$this->createCMDBTables();
@@ -67,7 +67,7 @@ class cmdbPlugin extends ib {
 		// Create CMDB Columns Table
 		$this->sql->exec("CREATE TABLE IF NOT EXISTS cmdb_columns (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			name TEXT,
+			name TEXT UNIQUE,
 			description TEXT,
 			dataType TEXT,
 			fieldType TEXT,
@@ -77,6 +77,14 @@ class cmdbPlugin extends ib {
 			columnName TEXT,
 			FOREIGN KEY (section) REFERENCES cmdb_sections(id)
 		)");
+
+		$this->sql->exec("CREATE TABLE IF NOT EXISTS misc (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			key TEXT,
+			value TEXT
+		)");
+
+		$this->sql->exec('INSERT INTO misc (key,value) VALUES ("rebuildRequired","false");');
 	
 		// Populate CMDB Sections table with list of base sections (Name / Weight)
 		$BaseSections = [
@@ -120,6 +128,63 @@ class cmdbPlugin extends ib {
 		}
 	}
 
+	// Rebuild Required
+	public function rebuildRequired($val = null) {
+		if ($val != null) {
+			if ($val === true) {
+				$value = "true";
+			} elseif ($val === false) {
+				$value = "false";
+			}
+			$this->sql->exec('UPDATE misc SET value = "'.$value.'" WHERE key = "rebuildRequired"');
+		} else {
+			$stmt = $this->sql->prepare('SELECT * FROM misc WHERE key = :key');
+			$stmt->execute([':key' => 'rebuildRequired']);
+			return $stmt->fetch();
+		}
+	}
+
+	// Update CMDB Columns
+	private function updateCMDBColumns($rebuild = false) {
+		// Decode JSON data
+		$columns = $this->getColumnDefinitions();
+
+		// Get current columns in the cmdb table
+		$current_columns = $this->getDefinedColumns();
+
+		// Create a set of columns from the JSON data
+		$latest_columns = [];
+		foreach ($columns as $column) {
+			$latest_columns[$column['columnName']] = $column['dataType'];
+		}
+
+		// Add new columns
+		foreach ($latest_columns as $column => $data_type) {
+			if (!in_array($column, array_column($current_columns,'name'))) {
+				$this->sql->exec("ALTER TABLE cmdb ADD COLUMN $column $data_type");
+			}
+		}
+
+		if ($rebuild) {
+			// Remove old columns
+			foreach ($current_columns as $column) {
+				if (!array_key_exists($column, $json_columns)) {
+					// SQLite does not support DROP COLUMN directly, so you need to recreate the table without the column
+					// This is a simplified example, you might need to handle data migration
+					// Create a new table without the column
+					$this->sql->exec("CREATE TABLE cmdb_new AS SELECT * FROM cmdb WHERE 1=0");
+					foreach ($latest_columns as $new_column => $data_type) {
+						$this->sql->exec("ALTER TABLE cmdb_new ADD COLUMN $new_column $data_type");
+					}
+					$this->sql->exec("INSERT INTO cmdb_new SELECT * FROM cmdb");
+					$this->sql->exec("DROP TABLE cmdb");
+					$this->sql->exec("ALTER TABLE cmdb_new RENAME TO cmdb");
+					break;
+				}
+			}
+		}
+	}
+
 	// Get a list of all columns in the CMDB Table
 	public function getDefinedColumns() {
 		$result = $this->sql->query('PRAGMA table_info("cmdb")');
@@ -143,7 +208,7 @@ class cmdbPlugin extends ib {
 		$columns = $this->getDefinedColumns();
 		foreach ($data as $key => $value) {
 		  if (!in_array($key,array_column($columns,"name"))) {
-			$this->api->setAPIResponse('Error',$key." does not exist in the database");
+			$this->api->setAPIResponse('Error',"The column: <b>".$key."</b> does not exist in the database. You must rebuild the database before using this field.");
 			return false;
 		  }
 		}
@@ -181,12 +246,63 @@ class cmdbPlugin extends ib {
 	}
 
 	// Add new column definition to CMDB Columns Table
-	public function addColumnDefinition($columnName,$name,$columnDescription,$dataType,$fieldType,$SectionID,$Visible,$Weight) {
-		$dbquery = $this->sql->prepare("INSERT INTO cmdb_columns (columnName, name, description, dataType, fieldType, section, visible, weight) VALUES (:columnName, :name, :description, :dataType, :fieldType, :section, :visible, :weight);");
-		if ($dbquery->execute([":columnName" => $columnName,":name" => $name,":description" => $columnDescription, ":dataType" => $dataType, ":fieldType" => $fieldType, ":section" => $SectionID, ":visible" => $Visible, ":weight" => $Weight])) {
+	public function addColumnDefinition($columnName,$name,$columnDescription,$dataType,$fieldType,$SectionID,$Visible,$Weight = null) {
+		if ($Weight) {
+			$dbquery = $this->sql->prepare("INSERT INTO cmdb_columns (columnName, name, description, dataType, fieldType, section, visible, weight) VALUES (:columnName, :name, :description, :dataType, :fieldType, :section, :visible, :weight);");
+			$execute = [":columnName" => $columnName,":name" => $name,":description" => $columnDescription, ":dataType" => $dataType, ":fieldType" => $fieldType, ":section" => $SectionID, ":visible" => $Visible, ":weight" => $Weight];
+		} else {
+			$dbquery = $this->sql->prepare("INSERT INTO cmdb_columns (columnName, name, description, dataType, fieldType, section, visible, weight) VALUES (:columnName, :name, :description, :dataType, :fieldType, :section, :visible, (SELECT IFNULL(MAX(weight), 0) + 1 FROM cmdb_columns WHERE section = :section));");
+			$execute = [":columnName" => $columnName,":name" => $name,":description" => $columnDescription, ":dataType" => $dataType, ":fieldType" => $fieldType, ":section" => $SectionID, ":visible" => $Visible];
+		}
+		if ($dbquery->execute($execute)) {
+			$this->api->setAPIResponseMessage('Successfully added column');
+			$this->updateCMDBColumns();
 			return true;
 		}
+		$this->api->setAPIResponse('Error','Failed to add column');
 		return false;
+	}
+
+	// Updates a column definition within the CMDB Sections Table
+	public function updateColumnDefinition($id,$data) {
+		if ($this->getSectionById($id)) {
+			$updateFields = [];
+			foreach ($data as $key => $value) {
+			  $updateFields[] = "$key = '$value'";
+			}
+			if (!empty($updateFields)) {
+				$prepare = "UPDATE cmdb_columns SET " . implode(", ", $updateFields) . " WHERE id = :id";
+				$dbquery = $this->sql->prepare($prepare);
+				if ($dbquery->execute([':id' => $id])) {
+					$this->api->setAPIResponseMessage('Successfully updated section');
+					return true;
+				}
+				$this->api->setAPIResponse('Error','Failed to update section');
+				return false;
+			} else {
+				$this->api->setAPIResponseMessage('Nothing to update');
+			}
+		} else {
+			$this->api->setAPIResponse('Error','Section does not exist');
+			return false;
+		}
+	}
+
+	// Remove section from the CMDB Columns Table
+	public function removeColumnDefinition($id) {
+		if ($this->getColumnDefinitionById($id)) {
+			$dbquery = $this->sql->prepare("DELETE FROM cmdb_columns WHERE id = :id;");
+			if ($dbquery->execute([':id' => $id])) {
+				$this->api->setAPIResponseMessage('Successfully removed column');
+				$this->rebuildRequired(true);
+				return true;
+			}
+			$this->api->setAPIResponse('Error','Failed to remove column');
+			return false;
+		} else {
+			$this->api->setAPIResponse('Error','Column does not exist');
+			return false;
+		}
 	}
 
 	// Function to manage updating weights of Column Definitions

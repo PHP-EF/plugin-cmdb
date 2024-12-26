@@ -11,6 +11,20 @@ $app->get('/plugin/cmdb/settings', function ($request, $response, $args) {
 		->withStatus($GLOBALS['responseCode']);
 });
 
+// Get CMDB Layout (Used to build the tables & form)
+$app->get('/plugin/cmdb/layout', function ($request, $response, $args) {
+	$cmdbPlugin = new cmdbPlugin();
+	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-READ'])) {
+        $cmdbPlugin->api->setAPIResponseData($cmdbPlugin->getColumnsAndSections());
+	}
+	$response->getBody()->write(jsonE($GLOBALS['api']));
+	return $response
+		->withHeader('Content-Type', 'application/json;charset=UTF-8')
+		->withStatus($GLOBALS['responseCode']);
+});
+
+// ** RECORDS ** //
+
 // Get CMDB Records
 $app->get('/plugin/cmdb/records', function ($request, $response, $args) {
 	$cmdbPlugin = new cmdbPlugin();
@@ -66,17 +80,7 @@ $app->delete('/plugin/cmdb/record/{id}', function ($request, $response, $args) {
 		->withStatus($GLOBALS['responseCode']);
 });
 
-// Get CMDB Layout (Used to build the tables & form)
-$app->get('/plugin/cmdb/layout', function ($request, $response, $args) {
-	$cmdbPlugin = new cmdbPlugin();
-	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-READ'])) {
-        $cmdbPlugin->api->setAPIResponseData($cmdbPlugin->getColumnsAndSections());
-	}
-	$response->getBody()->write(jsonE($GLOBALS['api']));
-	return $response
-		->withHeader('Content-Type', 'application/json;charset=UTF-8')
-		->withStatus($GLOBALS['responseCode']);
-});
+// ** SECTIONS ** //
 
 // Get CMDB Sections
 $app->get('/plugin/cmdb/sections', function ($request, $response, $args) {
@@ -134,6 +138,8 @@ $app->delete('/plugin/cmdb/section/{id}', function ($request, $response, $args) 
 		->withStatus($GLOBALS['responseCode']);
 });
 
+// ** COLUMNS ** //
+
 // Get CMDB Columns
 $app->get('/plugin/cmdb/columns', function ($request, $response, $args) {
 	$cmdbPlugin = new cmdbPlugin();
@@ -146,6 +152,47 @@ $app->get('/plugin/cmdb/columns', function ($request, $response, $args) {
 		}
         
 	}
+	$response->getBody()->write(jsonE($GLOBALS['api']));
+	return $response
+		->withHeader('Content-Type', 'application/json;charset=UTF-8')
+		->withStatus($GLOBALS['responseCode']);
+});
+
+// Create New CMDB Column
+$app->post('/plugin/cmdb/columns', function ($request, $response, $args) {
+	$cmdbPlugin = new cmdbPlugin();
+    if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-ADMIN'])) {
+        $data = $cmdbPlugin->api->getAPIRequestData($request);
+        // Create the CMDB Section with the submitted data
+		$name = $data['name'] ?? null;
+		$section = $data['section'] ?? null;
+		$description = $data['description'] ?? null;
+		$dataType = $data['dataType'] ?? null;
+		$fieldType = $data['fieldType'] ?? null;
+		$visible = $data['visible'] ?? null;
+		$columnName = sanitizeInput($name);
+		if ($name && $section && $dataType && $fieldType) {
+			$cmdbPlugin->addColumnDefinition($columnName,$name,$description,$dataType,$fieldType,$section,$visible);
+		} else {
+			$cmdbPlugin->api->setAPIResponse('Error','Required information missing from request');
+		}
+    }
+	$response->getBody()->write(jsonE($GLOBALS['api']));
+	return $response
+		->withHeader('Content-Type', 'application/json;charset=UTF-8')
+		->withStatus($GLOBALS['responseCode']);
+});
+
+// Update CMDB Column
+$app->patch('/plugin/cmdb/column/{id}', function ($request, $response, $args) {
+	$cmdbPlugin = new cmdbPlugin();
+    if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-ADMIN'])) {
+        $data = $cmdbPlugin->api->getAPIRequestData($request);
+        // Create the CMDB Section with the submitted data
+		if (isset($data)) {
+			$cmdbPlugin->updateColumnDefinition($args['id'],$data);
+		}
+    }
 	$response->getBody()->write(jsonE($GLOBALS['api']));
 	return $response
 		->withHeader('Content-Type', 'application/json;charset=UTF-8')
@@ -173,6 +220,18 @@ $app->patch('/plugin/cmdb/column/{id}/weight', function ($request, $response, $a
 		->withStatus($GLOBALS['responseCode']);
 });
 
+// Delete CMDB Section
+$app->delete('/plugin/cmdb/column/{id}', function ($request, $response, $args) {
+	$cmdbPlugin = new cmdbPlugin();
+    if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-ADMIN'])) {
+		$cmdbPlugin->removeColumnDefinition($args["id"]);
+    }
+	$response->getBody()->write(jsonE($GLOBALS['api']));
+	return $response
+		->withHeader('Content-Type', 'application/json;charset=UTF-8')
+		->withStatus($GLOBALS['responseCode']);
+});
+
 // Update CMDB Section Weight
 $app->patch('/plugin/cmdb/section/{id}/weight', function ($request, $response, $args) {
 	$cmdbPlugin = new cmdbPlugin();
@@ -187,6 +246,21 @@ $app->patch('/plugin/cmdb/section/{id}/weight', function ($request, $response, $
 		} else {
 			$cmdbPlugin->api->setAPIResponse('Error','Weight missing from request');
 		}        
+	}
+	$response->getBody()->write(jsonE($GLOBALS['api']));
+	return $response
+		->withHeader('Content-Type', 'application/json;charset=UTF-8')
+		->withStatus($GLOBALS['responseCode']);
+});
+
+// Check If DB Rebuild Required
+$app->get('/plugin/cmdb/dbRebuild', function ($request, $response, $args) {
+	$cmdbPlugin = new cmdbPlugin();
+	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-ADMIN'])) {
+		$dbrebuild = $cmdbPlugin->rebuildRequired();
+		if ($dbrebuild) {
+			$cmdbPlugin->api->setAPIResponse('Warning','Database rebuild required to remove old columns.');
+		}
 	}
 	$response->getBody()->write(jsonE($GLOBALS['api']));
 	return $response

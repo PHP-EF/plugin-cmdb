@@ -123,7 +123,7 @@
             <small class="form-text text-muted" id="columnNameHelp">The name for the CMDB Column</small>
           </div>
           <div class="form-group">
-            <label for="columnDescription">Column Name</label>
+            <label for="columnDescription">Column Description</label>
             <input type="text" class="form-control" id="columnDescription">
             <small class="form-text text-muted" id="columnDescriptionHelp">The description of the CMDB Column</small>
           </div>
@@ -137,7 +137,7 @@
             <small class="form-text text-muted" id="columnDataTypeHelp">The CMDB Column Data Type</small>
           </div>
           <div class="form-group">
-            <label for="columnFieldType">Data Type</label>
+            <label for="columnFieldType">Field Type</label>
             <select class="form-select" id="columnFieldType" aria-describedby="columnFieldTypeHelp">
               <option value="INPUT">Input</option>
               <option value="SELECT" disabled>Select</option>
@@ -178,8 +178,7 @@
         showRefresh: true,
         exportTypes: ["json", "xml", "csv", "txt", "excel", "sql"],
         showColumns: true,
-        buttons: "columnButtons",
-        buttonsOrder: "btnAddSection,refresh,columns,export,filterControlSwitch",
+        buttonsOrder: "btnAddSection,btnAddColumn,refresh,columns,export,filterControlSwitch",
         reorderableRows: true,
         rowAttributes: "rowAttributes",
         onReorderRow: onReorderSectionsRow,
@@ -559,8 +558,28 @@
             $("#sectionModal").modal("show");
           },
           attributes: {
-            title: "Add a CMDB section",
+            title: "Add a CMDB Section",
             style: "background-color:#4bbe40;border-color:#4bbe40;"
+          }
+        },
+        btnAddColumn: {
+          text: "Add Column",
+          icon: "bi-plus-lg",
+          event: function() {
+            // Clear all values from columns modal
+            $("#columnModal input").val("").removeClass("changed");
+            // Populate Modal Title
+            $("#columnModalLabel").text("New Column");
+            // Update Submit Button To New Column
+            $("#columnSubmit").attr("onclick","newColumnSubmit();");
+            // Populate Column Dropdown
+            updateSectionDropdown();
+            // Show columns modal
+            $("#columnModal").modal("show");
+          },
+          attributes: {
+            title: "Add a CMDB Column",
+            style: "background-color:#d0a624;border-color:#d0a624;"
           }
         }';}
         $content .= '
@@ -572,6 +591,8 @@
       "click .edit": function (e, value, row, index) {
         // Clear all values from column modal
         $("#columnModal input").val("").removeClass("changed");
+        // Populate Modal Title
+        $("#sectionModalLabel").text("Edit Column: "+row.name);
         // Populate Column Fields
         $("#columnName").val(row.name);
         $("#columnDescription").val(row.description);
@@ -583,14 +604,15 @@
         // Show Column Modal
         $("#columnModal").modal("show");
         // Update Submit Button To Edit Column
-        $("#columnSubmit").attr("onclick","editColumnSubmit("+row.id+");");
+        var tableId = $($(e.target).parents().eq(4)[0]).attr("id");
+        $("#columnSubmit").attr("onclick",`editColumnSubmit("`+row.id+`","`+tableId+`");`);
       },
       "click .delete": function (e, value, row, index) {
         if(confirm("Are you sure you want to delete Column: "+row.name+" from the CMDB? This is irriversible.") == true) {
           queryAPI("DELETE","/api/plugin/cmdb/column/"+row.id).done(function(data) {
             if (data["result"] == "Success") {
               toast(data["result"],"",data["message"],"success");
-              $("#columnsTable").bootstrapTable("refresh");
+              $($(e.target).parents().eq(4)[0]).bootstrapTable("refresh");
             } else if (data["result"] == "Error") {
               toast(data["result"],"",data["message"],"danger","30000");
             } else {
@@ -600,34 +622,6 @@
             toast("API Error","","Failed to remove column: "+row.name,"danger","30000");
           });
         }
-      }
-    }
-
-    // CMDB Column Buttons
-    function columnButtons() {
-      return {
-        ';
-        // Check if user has Admin Permission and display add button
-        if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-ADMIN'])) { $content .= '
-        btnAddColumn: {
-          text: "Add Column",
-          icon: "bi-plus-lg",
-          event: function() {
-            // Clear all values from column modal
-            $("#columnModal input").val("").removeClass("changed");
-            // Update Submit Button To New Column
-            $("#columnSubmit").attr("onclick","newColumnSubmit();");
-            // Populate Section Dropdown
-            updateSectionDropdown();
-            // Show column modal
-            $("#columnModal").modal("show");
-          },
-          attributes: {
-            title: "Add a CMDB column",
-            style: "background-color:#4bbe40;border-color:#4bbe40;"
-          }
-        }';}
-        $content .= '
       }
     }
 
@@ -749,6 +743,62 @@
       }
     }
 
+    function newColumnSubmit() {
+      var postArr = {
+          "name": $("#columnName").val() ?? null,
+          "description": $("#columnDescription").val() ?? null,
+          "dataType": $("#columnDataType").val() ?? null,
+          "fieldType": $("#columnFieldType").val() ?? null,
+          "section": $("#columnSection").val() ?? null,
+          "visible": $("#columnVisible").val() ?? null,
+      };
+      if (postArr) {
+        queryAPI("POST","/api/plugin/cmdb/columns",postArr).done(function(data) {
+          if (data["result"] == "Success") {
+              toast(data["result"],"",data["message"],"success");
+              $("#sectionsTable").bootstrapTable("refresh");
+              $("#columnModal").modal("hide");
+          } else if (data["result"] == "Error") {
+              toast(data["result"],"",data["message"],"danger");
+          } else {
+              toast("API Error","","Failed to add column","danger","30000");
+          }
+        }).fail(function() {
+          toast("API Error","","Failed to add column","danger","30000");
+        });
+      } else {
+        toast("Error","","Missing required fields","danger","30000");
+      }
+    }
+
+    function editColumnSubmit(id,tableId) {
+      var postArr = {
+          "name": $("#columnName").val() ?? null,
+          "description": $("#columnDescription").val() ?? null,
+          "dataType": $("#columnDataType").val() ?? null,
+          "fieldType": $("#columnFieldType").val() ?? null,
+          "section": $("#columnSection").val() ?? null,
+          "visible": $("#columnVisible").is(":checked"),
+      };
+      if (postArr) {
+        queryAPI("PATCH","/api/plugin/cmdb/column/"+id,postArr).done(function(data) {
+          if (data["result"] == "Success") {
+              toast(data["result"],"",data["message"],"success");
+              $("#"+tableId).bootstrapTable("refresh");
+              $("#columnModal").modal("hide");
+          } else if (data["result"] == "Error") {
+              toast(data["result"],"",data["message"],"danger");
+          } else {
+              toast("API Error","","Failed to edit column","danger","30000");
+          }
+        }).fail(function() {
+          toast("API Error","","Failed to edit column","danger","30000");
+        });
+      } else {
+        toast("Error","","Missing required fields","danger","30000");
+      }
+    }
+
     function updateSectionDropdown(row = {}) {
       queryAPI("GET","/api/plugin/cmdb/sections").done(function(data) {
         const sectionDropdown = $("#columnSection");
@@ -760,6 +810,12 @@
         row.section ? sectionDropdown.val(row.section) : sectionDropdown.val("");
       });
     }
+
+    queryAPI("GET","/api/plugin/cmdb/dbRebuild").done(function(data) {
+      if (data["result"] == "Warning") {
+        toast(data["result"],"",data["message"],"warning","30000");
+      }
+    });
   </script>
 ';
 return $content;
