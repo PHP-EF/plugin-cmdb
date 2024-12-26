@@ -4,6 +4,7 @@
     die();
   }
   $content = '
+
   <section class="section">
     <div class="row">
       <div class="col-lg-12">
@@ -25,43 +26,7 @@
             <div class="container">
               <div class="row justify-content-center">
 
-                <table data-url="/api/plugin/cmdb/records"
-                  data-data-field="data"
-                  data-toggle="table"
-                  data-search="true"
-                  data-filter-control="true"
-                  data-filter-control-visible="false"
-                  data-show-filter-control-switch="true"
-                  data-show-refresh="true"
-                  data-show-columns="true"
-                  data-show-export="true"
-                  data-pagination="true"
-                  data-toolbar="#toolbar"
-                  data-sort-name="Name"
-                  data-sort-order="asc"
-                  data-page-size="25"
-                  data-buttons="cmdbButtons"
-                  data-buttons-order= "btnAddRecord,refresh,columns,export,filterControlSwitch",
-                  class="table table-striped" id="cmdbTable">
-                  <thead>
-                    <tr>
-                      <th data-field="state" data-checkbox="true"></th>
-                      <th data-field="id" data-visible="false" data-filter-control="input">id</th>
-                      <th data-field="CPU" data-sortable="true" data-filter-control="input">CPU</th>
-                      <th data-field="Memory" data-sortable="true" data-filter-control="input">Memory</th>
-                      <th data-field="ServerName" data-sortable="true" data-filter-control="input">Server Name</th>
-                      <th data-field="FQDN" data-sortable="true" data-filter-control="input">FQDN</th>
-                      <th data-field="IP" data-sortable="true" data-filter-control="input">IP</th>
-                      <th data-field="SubnetMask" data-sortable="true" data-filter-control="input">Subnet Mask</th>
-                      <th data-field="DNSServers" data-sortable="true" data-filter-control="input">DNS Servers</th>
-                      <th data-field="DNSSuffix" data-sortable="true" data-filter-control="input">DNS Suffix</th>
-                      <th data-field="Gateway" data-sortable="true" data-filter-control="input">Gateway</th>
-                      <th data-field="Description" data-sortable="true" data-filter-control="input">Description</th>
-                      <th data-field="OperatingSystem" data-sortable="true" data-filter-control="input">Operating System</th>
-                      <th data-formatter="actionFormatter" data-events="actionEvents">Actions</th>
-                    </tr>
-                  </thead>
-                </table>
+                <table class="table table-striped" id="cmdbTable"></table>
 
               </div>
             </div>
@@ -78,59 +43,13 @@
     <div class="modal-dialog modal-lg" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="recordModalLabel">CMDB record</h5>
+          <h5 class="modal-title" id="recordModalLabel">CMDB Record</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
             <span aria-hidden="true"></span>
           </button>
         </div>
         <div class="modal-body" id="recordModelBody">
           <form id="recordForm">
-            <div class="row">
-              <div class="col-sm-8">
-                <p id="modalDescription"></p>
-              </div>
-            </div>
-            <div class="row">
-              <div class="col-sm-12">
-                <h5 class="card-title">General Information</h5>
-                <div class="form-group" style="display:none;">
-                  <label for="recordID">ID</label>
-                  <input type="text" class="form-control info-field" id="recordID" aria-describedby="recordIDHelp" name="id" disabled hidden>
-                </div>
-                <div class="form-group">
-                  <label for="recordName">Name</label>
-                  <input type="text" class="form-control info-field" id="recordName" aria-describedby="recordNameHelp" name="ServerName">
-                </div>
-                <div class="form-group">
-                  <label for="recordFQDN">DNS Name</label>
-                  <input type="text" class="form-control info-field" id="recordFQDN" aria-describedby="recordFQDNHelp" name="FQDN">
-                </div>
-                <div class="form-group">
-                  <label for="recordCPU">CPU(s)</label>
-                  <input type="text" class="form-control info-field" id="recordCPU" aria-describedby="recordCPUHelp" name="CPU">
-                </div>
-                <div class="form-group">
-                  <label for="recordMemory">Memory (MB)</label>
-                  <input type="text" class="form-control info-field" id="recordMemory" aria-describedby="recordMemoryHelp" name="Memory">
-                </div>
-                <div class="form-group">
-                  <label for="recordOS">OS</label>
-                  <input type="text" class="form-control info-field" id="recordOS" aria-describedby="recordOSHelp" name="OperatingSystem">
-                </div>
-                <div class="form-group">
-                  <label for="recordIP">IP Address</label>
-                  <input type="text" class="form-control info-field" id="recordIP" aria-describedby="recordIPHelp" name="IP">
-                </div>
-                <div class="form-group">
-                  <label for="recordNetmask">Subnet Mask</label>
-                  <input type="text" class="form-control info-field" id="recordNetmask" aria-describedby="recordNetmaskHelp" name="SubnetMask">
-                </div>
-                <div class="form-group">
-                  <label for="recordGateway">Gateway</label>
-                  <input type="text" class="form-control info-field" id="recordGateway" aria-describedby="recordGatewayHelp" name="Gateway" required>
-                </div>
-              </div>
-            </div>
           </form>
         </div>
         <div class="modal-footer">
@@ -141,8 +60,372 @@
     </div>
   </div>
 
+  
+  <!-- Manage Sections/Columns Modal -->
+  <div class="modal fade" id="manageModal" tabindex="-1" role="dialog" aria-labelledby="manageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="manageModalLabel">Configure CMDB Sections & Columns</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true"></span>
+          </button>
+        </div>
+        <div class="modal-body" id="columnsModelBody">
+          <table class="table table-striped" id="sectionsTable"></table>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section Modal -->
+  <div class="modal fade pt-5" id="sectionModal" tabindex="-1" role="dialog" aria-labelledby="sectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="sectionModalLabel">CMDB Section</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true"></span>
+          </button>
+        </div>
+        <div class="modal-body" id="sectionModalBody">
+          <div class="form-group">
+            <label for="sectionName">Section Name</label>
+            <input type="text" class="form-control" id="sectionName">
+            <small class="form-text text-muted" id="sectionNameHelp">The name for the CMDB Section</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-success" data-bs-dismiss="modal" id="sectionSubmit">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Column Modal -->
+  <div class="modal fade pt-5" id="columnModal" tabindex="-1" role="dialog" aria-labelledby="columnModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-md" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="columnModalLabel">CMDB Column</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true"></span>
+          </button>
+        </div>
+        <div class="modal-body" id="columnModalBody">
+          <div class="form-group">
+            <label for="columnName">Column Name</label>
+            <input type="text" class="form-control" id="columnName">
+            <small class="form-text text-muted" id="columnNameHelp">The name for the CMDB Column</small>
+          </div>
+          <div class="form-group">
+            <label for="columnDescription">Column Name</label>
+            <input type="text" class="form-control" id="columnDescription">
+            <small class="form-text text-muted" id="columnDescriptionHelp">The description of the CMDB Column</small>
+          </div>
+          <div class="form-group">
+            <label for="columnDataType">Data Type</label>
+            <select class="form-select" id="columnDataType" aria-describedby="columnDataTypeHelp">
+              <option value="TEXT">Text</option>
+              <option value="INTEGER">Integer</option>
+              <option value="BOOLEAN">Boolean</option>
+            </select>
+            <small class="form-text text-muted" id="columnDataTypeHelp">The CMDB Column Data Type</small>
+          </div>
+          <div class="form-group">
+            <label for="columnFieldType">Data Type</label>
+            <select class="form-select" id="columnFieldType" aria-describedby="columnFieldTypeHelp">
+              <option value="INPUT">Input</option>
+              <option value="SELECT" disabled>Select</option>
+            </select>
+            <small class="form-text text-muted" id="columnFieldTypeHelp">The CMDB Column Field Type</small>
+          </div>
+          <div class="form-group">
+            <label for="columnSection">Section</label>
+            <select class="form-select" id="columnSection" aria-describedby="columnSectionHelp">
+            </select>
+            <small class="form-text text-muted" id="columnSectionHelp">The CMDB Column Assigned Section</small>
+          </div>
+          <br>
+          <div class="form-group">
+            <div class="form-check form-switch">
+              <label class="form-check-label" for="columnVisible">Visible</label>
+              <input class="form-check-input" type="checkbox" id="columnVisible" name="columnVisible">
+              <small class="form-text text-muted" id="columnVisibleHelp">Whether the field is visible in the table view by default</small>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-success" data-bs-dismiss="modal" id="columnSubmit">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script>
+    // Function to build the CMDB Sections Table
+    function buildSectionsTable() {
+      $("#sectionsTable").bootstrapTable({
+        url: "/api/plugin/cmdb/sections",
+        dataField: "data",
+        pagination: true,
+        search: true,
+        showRefresh: true,
+        exportTypes: ["json", "xml", "csv", "txt", "excel", "sql"],
+        showColumns: true,
+        buttons: "columnButtons",
+        buttonsOrder: "btnAddSection,refresh,columns,export,filterControlSwitch",
+        reorderableRows: true,
+        rowAttributes: "rowAttributes",
+        onReorderRow: onReorderSectionsRow,
+        detailView: true,
+        detailFormatter: detailFormatter,
+        onExpandRow: buildColumnsTable,
+        buttons: "sectionButtons",
+        columns: [{
+          field: "id",
+          title: "ID",
+          visible: false
+        },{
+          field: "name",
+          title: "Section Name",
+        },{
+          field: "weight",
+          title: "Section Weight",
+          visible: false
+        },{
+          title: "Actions",
+          formatter: "actionFormatter",
+          events: "sectionActionEvents"
+        }]
+      });
+    }
+
+    function rowAttributes(row, index) {
+      return {
+        "id": "row-"+row.id
+      }
+    }
+
+    function onReorderColumnsRow(data,row,oldrow,table) {
+      var key = data.findIndex(item => item.id === row.id) + 1;
+      queryAPI("PATCH","/api/plugin/cmdb/column/"+row.id+"/weight",{"weight": key}).done(function(data) {
+        if (data["result"] == "Success") {
+            toast(data["result"],"",data["message"],"success");
+        } else if (data["result"] == "Error") {
+            toast(data["result"],"",data["message"],"danger");
+        } else {
+            toast("API Error","","Failed to edit column position","danger","30000");
+        }
+      }).fail(function() {
+        toast("API Error","","Failed to edit column position","danger","30000");
+      });
+    }
+
+    function onReorderSectionsRow(data,row,oldrow,table) {
+      var key = data.findIndex(item => item.id === row.id) + 1;
+      queryAPI("PATCH","/api/plugin/cmdb/section/"+row.id+"/weight",{"weight": key}).done(function(data) {
+        if (data["result"] == "Success") {
+            toast(data["result"],"",data["message"],"success");
+        } else if (data["result"] == "Error") {
+            toast(data["result"],"",data["message"],"danger");
+        } else {
+            toast("API Error","","Failed to edit section position","danger","30000");
+        }
+      }).fail(function() {
+        toast("API Error","","Failed to edit section position","danger","30000");
+      });
+    }
+
+    // Function to build the CMDB Columns Table
+    function buildColumnsTable(index, row, detail) {
+      if (!row) return;
+      const columnsTableId = `#columns-table-${index}`;
+      $(columnsTableId).bootstrapTable({
+        url: "/api/plugin/cmdb/columns?section="+row.id,
+        dataField: "data",
+        reorderableRows: true,
+        rowAttributes: "rowAttributes",
+        onReorderRow: onReorderColumnsRow,
+        columns: [{
+          field: "id",
+          title: "ID",
+          visible: false
+        },{
+          field: "name",
+          title: "Column Name",
+          filterControl: "select"
+        },{
+          field: "description",
+          title: "Description",
+          filterControl: "select"
+        },{
+          field: "dataType",
+          title: "Data Type",
+          filterControl: "select"
+        },{
+          field: "fieldType",
+          title: "Field Type",
+          filterControl: "select"
+        },{
+          field: "weight",
+          title: "Weight",
+          filterControl: "select",
+          visible: false
+        },{
+          title: "Actions",
+          formatter: "actionFormatter",
+          events: "columnActionEvents"
+        }]
+      });
+    }
+
+    function createTableHtml(index, items) {
+      let html = [];
+      let theme = getCookie("theme") == "dark" ? " table-dark" : "";
+      
+      html.push(`<table class="table table-striped`+theme+`" id="columns-table-` + index +`"></table>`);
+      return html.join("");
+    }
+
+    function detailFormatter(index, row) {
+      let html = [];
+      if (row) {
+        html.push(createTableHtml(index, Array.isArray(row) ? row.Items : Object.values(row)));
+      }
+      return html.join("");
+    }
+
+    function buildCMDBTable(jsonData) {
+      const columns = jsonData.map(column => ({
+          field: column.columnName,
+          title: column.name,
+          sortable: true,
+          visible: column.visible === 1,
+          filterControl: column.fieldType.toLowerCase()
+      }));
+
+      // Append the actions column
+      columns.push({
+          field: "actions",
+          title: "Actions",
+          formatter: "actionFormatter",
+          events: "cmdbActionEvents"
+      });
+
+      $("#cmdbTable").bootstrapTable({
+          url: "/api/plugin/cmdb/records",
+          dataField: "data",
+          sortable: true,
+          pagination: true,
+          search: true,
+          showExport: true,
+          showRefresh: true,
+          exportTypes: ["json", "xml", "csv", "txt", "excel", "sql"],
+          showColumns: true,
+          buttons: "cmdbButtons",
+          buttonsOrder: "btnAddRecord,refresh,columns,export,filterControlSwitch,btnEditColumns",
+          filterControl: true,
+          filterControlVisible: false,
+          showFilterControlSwitch: true,
+          columns: columns
+      });
+    }
+
+    function createForm(jsonData) {
+      const formDiv = document.getElementById("recordForm"); // Make sure there\'s a div with id "formDiv" in your HTML
+      const sections = {};
+
+      // Group items by section_name
+      jsonData.forEach(item => {
+          if (!sections[item.section_name]) {
+              sections[item.section_name] = [];
+          }
+          sections[item.section_name].push(item);
+      });
+
+      // Sort sections by section_weight
+      const sortedSections = Object.keys(sections).sort((a, b) => {
+          const sectionA = sections[a][0].section_weight;
+          const sectionB = sections[b][0].section_weight;
+          return sectionA - sectionB;
+      });
+
+      // Create form sections and items
+      sortedSections.forEach(sectionName => {
+          const sectionItems = sections[sectionName];
+
+          // Create section header
+          const sectionHeader = document.createElement("h3");
+          sectionHeader.innerText = sectionName;
+          formDiv.appendChild(sectionHeader);
+
+          // Sort items by column_weight
+          sectionItems.sort((a, b) => a.column_weight - b.column_weight);
+
+          const id = document.createElement("input");
+          id.id = "recordId";
+          id.hidden = true;
+          formDiv.appendChild(id);
+
+          // Create form items for each section
+          sectionItems.forEach(item => {
+              const formGroup = document.createElement("div");
+              formGroup.className = "form-group";
+
+              const label = document.createElement("label");
+              label.htmlFor = `record${item.columnName}`;
+              label.innerText = item.name;
+
+              const input = document.createElement("input");
+              input.type = item.dataType === "INTEGER" ? "number" : "text";
+              input.className = "form-control info-field";
+              input.id = `record${item.columnName}`;
+              input.name = item.columnName;
+
+              const small = document.createElement("small");
+              small.innerText = item.description;
+              small.className = "form-text text-muted";
+              small.id = `record${item.columnName}Help`;
+
+              formGroup.appendChild(label);
+              formGroup.appendChild(input);
+              formGroup.appendChild(small);
+              formDiv.appendChild(formGroup);
+          });
+
+          formDiv.appendChild(document.createElement("br"));
+      });
+
+      // Detect Changes
+      $(".info-field").change(function(elem) {
+        toast("Configuration","",$(elem.target.previousElementSibling).text()+" has changed.<br><small>Save configuration to apply changes.</small>","warning");
+        $(this).addClass("changed");
+      });
+    }
+
+    // Function to update elements
+    function updateInputs(row) {
+      $("#recordModal input").val("").removeClass("changed");
+      for (const key in row) {
+        if (row.hasOwnProperty(key)) {
+          $(`#record${key}`).val(row[key]);
+        }
+      }
+      $("#recordId").val(row.id);
+    }
+
+    // Build Form & Table Layout
+    queryAPI("GET", "/api/plugin/cmdb/layout").done(function(data) {
+      buildCMDBTable(data.data);
+      createForm(data.data);
+    });
+
     // CMDB Row Actions Buttons
     function actionFormatter(value, row, index) {
       return [
@@ -160,12 +443,12 @@
     }
 
     // CMDB Row Action Events
-    window.actionEvents = {
+    window.cmdbActionEvents = {
       "click .edit": function (e, value, row, index) {
-        populateRecordModal(row);
+        updateInputs(row);
         $("#recordModal").addClass("editModal").removeClass("newModal").modal("show");
         // Update Submit Button To Edit Record
-        $("#modalSubmit").attr("onclick","editSubmit();");
+        $("#modalSubmit").attr("onclick","editRecordSubmit();");
       },
       "click .delete": function (e, value, row, index) {
         if(confirm("Are you sure you want to delete "+row.id+" from the CMDB? This is irriversible.") == true) {
@@ -193,12 +476,12 @@
         if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-WRITE'])) { $content .= '
         btnAddRecord: {
           text: "Add Record",
-          icon: "bi bi-plus-lg",
+          icon: "bi-plus-lg",
           event: function() {
             // Clear all values from new record modal
             $("#recordModal input").val("").removeClass("changed");
             // Update Submit Button To New Record
-            $("#modalSubmit").attr("onclick","newSubmit();");
+            $("#modalSubmit").attr("onclick","newRecordSubmit();");
             // Show new record modal
             $("#recordModal").modal("show");
           },
@@ -206,26 +489,149 @@
             title: "Add a CMDB record",
             style: "background-color:#4bbe40;border-color:#4bbe40;"
           }
+        },';}
+        if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-ADMIN'])) { $content .= '
+          btnEditColumns: {
+            text: "Edit Columns",
+            icon: "bi-layout-text-window",
+            event: function() {
+              $("#manageModal").modal("show");
+              buildSectionsTable();
+            },
+            attributes: {
+              title: "Edit The CMDB Columns",
+              style: "background-color:#9e3ee3;border-color:#9e3ee3;"
+            }
+          }';}
+        $content .= '
+      }
+    }
+
+    // CMDB Section Row Action Events
+    window.sectionActionEvents = {
+      "click .edit": function (e, value, row, index) {
+        // Clear all values from section modal
+        $("#sectionModal input").val("").removeClass("changed");
+        // Populate Section Name
+        $("#sectionName").val(row.name);
+        // Populate Modal Title
+        $("#sectionModalLabel").text("Edit Section: "+row.name);
+        // Show Section Modal
+        $("#sectionModal").modal("show");
+        // Update Submit Button To Edit Section
+        $("#sectionSubmit").attr("onclick","editSectionSubmit("+row.id+");");
+      },
+      "click .delete": function (e, value, row, index) {
+        if(confirm("Are you sure you want to delete Section: "+row.name+" from the CMDB? This is irriversible.") == true) {
+          queryAPI("DELETE","/api/plugin/cmdb/section/"+row.id).done(function(data) {
+            if (data["result"] == "Success") {
+              toast(data["result"],"",data["message"],"success");
+              $("#sectionsTable").bootstrapTable("refresh");
+            } else if (data["result"] == "Error") {
+              toast(data["result"],"",data["message"],"danger","30000");
+            } else {
+              toast("Error","","Failed to remove section: "+row.name,"danger","30000");
+            }
+          }).fail(function() {
+            toast("API Error","","Failed to remove section: "+row.name,"danger","30000");
+          });
+        }
+      }
+    }
+
+    // CMDB Section Buttons
+    function sectionButtons() {
+      return {
+        ';
+        // Check if user has Admin Permission and display add button
+        if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-ADMIN'])) { $content .= '
+        btnAddSection: {
+          text: "Add Section",
+          icon: "bi-plus-lg",
+          event: function() {
+            // Clear all values from section modal
+            $("#sectionModal input").val("").removeClass("changed");
+            // Populate Modal Title
+            $("#sectionModalLabel").text("New Section");
+            // Update Submit Button To New Section
+            $("#sectionSubmit").attr("onclick","newSectionSubmit();");
+            // Show section modal
+            $("#sectionModal").modal("show");
+          },
+          attributes: {
+            title: "Add a CMDB section",
+            style: "background-color:#4bbe40;border-color:#4bbe40;"
+          }
         }';}
         $content .= '
       }
     }
 
-    // Function to populate Record Modal on inspect
-    function populateRecordModal(row) {
-      $("#recordModal input").val("");
-      $("#recordID").val(row.id);
-      $("#recordName").val(row.ServerName);
-      $("#recordFQDN").val(row.FQDN);
-      $("#recordIP").val(row.IP);
-      $("#recordCPU").val(row.CPU);
-      $("#recordMemory").val(row.Memory);
-      $("#recordNetmask").val(row.SubnetMask);
-      $("#recordGateway").val(row.Gateway);
-      $("#recordOS").val(row.OperatingSystem);
+    // CMDB Column Row Action Events
+    window.columnActionEvents = {
+      "click .edit": function (e, value, row, index) {
+        // Clear all values from column modal
+        $("#columnModal input").val("").removeClass("changed");
+        // Populate Column Fields
+        $("#columnName").val(row.name);
+        $("#columnDescription").val(row.description);
+        $("#columnDataType").val(row.dataType);
+        $("#columnFieldType").val(row.fieldType);
+        $("#columnVisible").prop("checked", row.visible);
+        // Populate Column Dropdown
+        updateSectionDropdown(row);
+        // Show Column Modal
+        $("#columnModal").modal("show");
+        // Update Submit Button To Edit Column
+        $("#columnSubmit").attr("onclick","editColumnSubmit("+row.id+");");
+      },
+      "click .delete": function (e, value, row, index) {
+        if(confirm("Are you sure you want to delete Column: "+row.name+" from the CMDB? This is irriversible.") == true) {
+          queryAPI("DELETE","/api/plugin/cmdb/column/"+row.id).done(function(data) {
+            if (data["result"] == "Success") {
+              toast(data["result"],"",data["message"],"success");
+              $("#columnsTable").bootstrapTable("refresh");
+            } else if (data["result"] == "Error") {
+              toast(data["result"],"",data["message"],"danger","30000");
+            } else {
+              toast("Error","","Failed to remove column: "+row.name,"danger","30000");
+            }
+          }).fail(function() {
+            toast("API Error","","Failed to remove column: "+row.name,"danger","30000");
+          });
+        }
+      }
     }
 
-    function newSubmit() {
+    // CMDB Column Buttons
+    function columnButtons() {
+      return {
+        ';
+        // Check if user has Admin Permission and display add button
+        if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-ADMIN'])) { $content .= '
+        btnAddColumn: {
+          text: "Add Column",
+          icon: "bi-plus-lg",
+          event: function() {
+            // Clear all values from column modal
+            $("#columnModal input").val("").removeClass("changed");
+            // Update Submit Button To New Column
+            $("#columnSubmit").attr("onclick","newColumnSubmit();");
+            // Populate Section Dropdown
+            updateSectionDropdown();
+            // Show column modal
+            $("#columnModal").modal("show");
+          },
+          attributes: {
+            title: "Add a CMDB column",
+            style: "background-color:#4bbe40;border-color:#4bbe40;"
+          }
+        }';}
+        $content .= '
+      }
+    }
+
+    function newRecordSubmit() {
       var formData = $("#recordForm .changed").serializeArray();
       
       // Include unchecked checkboxes in the formData
@@ -261,8 +667,9 @@
       });
     }
 
-    function editSubmit() {
-      var id = $("#recordID").val();
+    function editRecordSubmit() {
+      var id = $("#recordId").val();
+      console.log(id);
       var formData = $("#recordForm .changed").serializeArray();
       
       // Include unchecked checkboxes in the formData
@@ -295,17 +702,64 @@
         } else {
             toast("API Error","","Failed to edit CMDB record","danger","30000");
         }
+      }).fail(function() {
+        toast("API Error","","Failed to edit CMDB record","danger","30000");
       });
     }
 
-    // Detect Changes
-    $(".info-field").change(function(elem) {
-      toast("Configuration","",$(elem.target.previousElementSibling).text()+" has changed.<br><small>Save configuration to apply changes.</small>","warning");
-      $(this).addClass("changed");
-    });
+    function newSectionSubmit() {
+      var name = $("#sectionName").val() ?? null;
+      if (name) {
+        queryAPI("POST","/api/plugin/cmdb/sections",{"name": name}).done(function(data) {
+          if (data["result"] == "Success") {
+              toast(data["result"],"",data["message"],"success");
+              $("#sectionsTable").bootstrapTable("refresh");
+              $("#sectionModal").modal("hide");
+          } else if (data["result"] == "Error") {
+              toast(data["result"],"",data["message"],"danger");
+          } else {
+              toast("API Error","","Failed to edit CMDB record","danger","30000");
+          }
+        }).fail(function() {
+          toast("API Error","","Failed to edit CMDB record","danger","30000");
+        });
+      } else {
+        toast("Error","","The Section Name is required","danger","30000");
+      }
+    }
 
-    // Initialize Table
-    $("#cmdbTable").bootstrapTable();
+    function editSectionSubmit(id) {
+      var name = $("#sectionName").val() ?? null;
+      if (name) {
+        queryAPI("PATCH","/api/plugin/cmdb/section/"+id,{"name": name}).done(function(data) {
+          if (data["result"] == "Success") {
+              toast(data["result"],"",data["message"],"success");
+              $("#sectionsTable").bootstrapTable("refresh");
+              $("#sectionModal").modal("hide");
+          } else if (data["result"] == "Error") {
+              toast(data["result"],"",data["message"],"danger");
+          } else {
+              toast("API Error","","Failed to edit section","danger","30000");
+          }
+        }).fail(function() {
+          toast("API Error","","Failed to edit section","danger","30000");
+        });
+      } else {
+        toast("Error","","The Section Name is required","danger","30000");
+      }
+    }
+
+    function updateSectionDropdown(row = {}) {
+      queryAPI("GET","/api/plugin/cmdb/sections").done(function(data) {
+        const sectionDropdown = $("#columnSection");
+        sectionDropdown.html("");
+        $.each(data.data, function(index, item) {
+            const option = $("<option></option>").val(item.id).text(item.name);
+            sectionDropdown.append(option);
+        });
+        row.section ? sectionDropdown.val(row.section) : sectionDropdown.val("");
+      });
+    }
   </script>
 ';
 return $content;
