@@ -602,7 +602,7 @@ class cmdbPlugin extends ib {
 			'Ansible Settings' => array(
 				$this->settingsOption('url', 'Ansible-URL', ['label' => 'Ansible AWX URL']),
 				$this->settingsOption('token', 'Ansible-Token', ['label' => 'Ansible AWX Token']),
-				$this->settingsOption('select', 'Ansible-Tag', ['label' => 'The tag to use when filtering available jobs', 'Options' => $AnsibleLabels])
+				$this->settingsOption('select', 'Ansible-Tag', ['label' => 'The tag to use when filtering available jobs', 'Options' => $AnsibleLabelsKeyValuePairs])
 			),
 		);
 	}
