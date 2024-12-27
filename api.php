@@ -323,17 +323,17 @@ $app->post('/plugin/cmdb/ansible/job', function ($request, $response, $args) {
 			}
 		}
 		$JsonData = json_encode($DataArray,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES);
-		$result = $this->SubmitAnsibleJob($data['jobid'], $DataArray);
+		$result = $cmdbPlugin->SubmitAnsibleJob($data['jobid'], $DataArray);
 		$DebugArr = array(
 			"request" => $data,
 			"response" => $result
 		);
 		if (isset($result->job)) {
-			$this->writeLog("Ansible","Submitted Ansible Job.","info",$DebugArr);
-			$this->api->setAPIResponseData($result);
+			$cmdbPlugin->logging->writeLog("Ansible","Submitted Ansible Job.","info",$DebugArr);
+			$cmdbPlugin->api->setAPIResponseData($result);
 		} else {
-			$this->api->setAPIResponse('Error','Error submitting ansible job. Check logs.');
-			$this->writeLog("Ansible","Error submitting ansible Job.","error",$DebugArr);
+			$cmdbPlugin->api->setAPIResponse('Error','Error submitting ansible job. Check logs.');
+			$cmdbPlugin->logging->writeLog("Ansible","Error submitting ansible Job.","error",$DebugArr);
 		}
 	}
 	$response->getBody()->write(jsonE($GLOBALS['api']));
