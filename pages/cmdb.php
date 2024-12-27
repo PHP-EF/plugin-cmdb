@@ -189,7 +189,7 @@
         </div>
         <div class="modal-footer">
           <div id="jobOutput" role="alert" style="width:100%;"></div>';
-          if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-JOB']) == false) { $content .= '
+          if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-JOB'])) { $content .= '
           <button type="button" class="btn btn-success" id="submitJob">Submit Job</button>';} $content .= '
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         </div>
@@ -891,7 +891,7 @@
       queryAPI("GET","/api/plugin/cmdb/ansible/templates").done(function(data) {
         if (data["result"] == "Success") {
           $.each(data.data, function() {
-            $("#ansibleJobs").append("<option value="+this.id+">"+this.description+"</option>");
+            $("#ansibleJobs").append("<option value="+this.id+">"+this.name+"</option>");
           });
           $("#ansibleJobSelectModal").modal("show");
         } else if (data["result"] == "Error") {
