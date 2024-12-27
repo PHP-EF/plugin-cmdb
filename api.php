@@ -282,6 +282,18 @@ $app->post('/plugin/cmdb/dbRebuild/initiate', function ($request, $response, $ar
 });
 
 // ** ANSIBLE ** //
+//  Return list of Ansible Labels
+$app->get('/plugin/cmdb/ansible/labels', function ($request, $response, $args) {
+	$cmdbPlugin = new cmdbPluginAnsible();
+	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-ADMIN'])) {
+		$cmdbPlugin->GetAnsibleLabels();
+	}
+	$response->getBody()->write(jsonE($GLOBALS['api']));
+	return $response
+		->withHeader('Content-Type', 'application/json;charset=UTF-8')
+		->withStatus($GLOBALS['responseCode']);
+});
+
 //  Return list of Ansible Job Templates
 $app->get('/plugin/cmdb/ansible/templates', function ($request, $response, $args) {
 	$cmdbPlugin = new cmdbPluginAnsible();

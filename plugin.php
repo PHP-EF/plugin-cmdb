@@ -695,4 +695,9 @@ class cmdbPluginAnsible extends cmdbPlugin {
 	  $Result = $this->QueryAnsible("post", "job_templates/".$id."/launch/", $data);
 	  return $Result;
 	}
+
+	public function GetAnsibleLabels() {
+		$Result = $this->QueryAnsible("get", "labels/?order_by=name");
+		return $Result;
+	}
 }
