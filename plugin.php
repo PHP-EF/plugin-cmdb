@@ -301,9 +301,9 @@ class cmdbPlugin extends ib {
 		return false;
 	}
 
-	// Updates a column definition within the CMDB Sections Table
+	// Updates a column definition within the CMDB cmdb_columns Table
 	public function updateColumnDefinition($id,$data) {
-		if ($this->getSectionById($id)) {
+		if ($this->getColumnDefinitionById($id)) {
 			$updateFields = [];
 			foreach ($data as $key => $value) {
 			  $updateFields[] = "$key = '$value'";
@@ -312,21 +312,21 @@ class cmdbPlugin extends ib {
 				$prepare = "UPDATE cmdb_columns SET " . implode(", ", $updateFields) . " WHERE id = :id";
 				$dbquery = $this->sql->prepare($prepare);
 				if ($dbquery->execute([':id' => $id])) {
-					$this->api->setAPIResponseMessage('Successfully updated section');
+					$this->api->setAPIResponseMessage('Successfully updated column');
 					return true;
 				}
-				$this->api->setAPIResponse('Error','Failed to update section');
+				$this->api->setAPIResponse('Error','Failed to update column');
 				return false;
 			} else {
 				$this->api->setAPIResponseMessage('Nothing to update');
 			}
 		} else {
-			$this->api->setAPIResponse('Error','Section does not exist');
+			$this->api->setAPIResponse('Error','Column does not exist');
 			return false;
 		}
 	}
 
-	// Remove section from the CMDB Columns Table
+	// Remove column from the CMDB Columns Table
 	public function removeColumnDefinition($id) {
 		if ($this->getColumnDefinitionById($id)) {
 			$dbquery = $this->sql->prepare("DELETE FROM cmdb_columns WHERE id = :id;");
@@ -656,8 +656,7 @@ class cmdbPluginAnsible extends cmdbPlugin {
 		  return false;
 		}
 		if ($Result) {
-		  return $Result->body;
-		  $Output = json_decode($Result->body);
+		  $Output = json_decode($Result->body,true);
 		  return $Output;
 		} else {
 			$this->api->setAPIResponse('Warning','No results returned from the API');
@@ -683,7 +682,7 @@ class cmdbPluginAnsible extends cmdbPlugin {
 		$Result = $this->QueryAnsible("get", "job_templates");
 	  }
 	  if ($Result) {
-		$this->api->setAPIResponseData($Result->results);
+		$this->api->setAPIResponseData($Result['results']);
 	  }
 	}
 	
