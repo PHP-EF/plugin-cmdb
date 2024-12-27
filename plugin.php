@@ -587,7 +587,6 @@ class cmdbPlugin extends ib {
 			"value" => ""
 		];
 		$AnsibleLabelsKeyValuePairs = array_merge($AnsibleLabelsKeyValuePairs,array_map(function($item) {
-			print_r($item);
 			return [
 				"name" => $item['name'],
 				"value" => $item['name']
