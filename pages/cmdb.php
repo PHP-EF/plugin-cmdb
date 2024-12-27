@@ -935,16 +935,23 @@
       });
       
       queryAPI("POST","/api/plugin/cmdb/ansible/job/"+jobId,configData).done(function(data) {
-        var ansibleJob = data.data;
-        if (ansibleJob.job) {
-          $("#jobOutput").append(`<p>Job "+ansibleJob.id+" started successfully. Click <a href="'; $content .= $cmdbPlugin->config->get("Plugins","cmdb")["Ansible-URL"]; $content .= '/#/jobs/playbook/"+ansibleJob.id+"/output" target="_blank">here</a> to view the Job in Ansible</p>`);
-          $("#jobOutput").addClass("alert alert-success");
+        if (data["result"] == "Success") {
+          var ansibleJob = data.data;
+          if (ansibleJob.job) {
+            $("#jobOutput").append(`<p>Job "+ansibleJob.id+" started successfully. Click <a href="'; $content .= $cmdbPlugin->config->get("Plugins","cmdb")["Ansible-URL"]; $content .= '/#/jobs/playbook/"+ansibleJob.id+"/output" target="_blank">here</a> to view the Job in Ansible</p>`);
+            $("#jobOutput").addClass("alert alert-success");
+          } else {
+            $("#jobOutput").append("<p>Job failed to start. See below for more information.</p>");
+            $("#jobOutput").append("<pre>"+JSON.stringify(ansibleJob,null,2)+"</pre>");
+            $("#jobOutput").addClass("alert alert-danger");
+          }
+        } else if (data["result"] == "Error") {
+            toast(data["result"],"",data["message"],"danger");
         } else {
-          $("#jobOutput").append("<p>Job failed to start. See below for more information.</p>");
-          $("#jobOutput").append("<pre>"+JSON.stringify(ansibleJob,null,2)+"</pre>");
-          $("#jobOutput").addClass("alert alert-danger");
+            toast("API Error","","Failed to submit Ansible Job","danger","30000");
         }
-        console.log(ansibleJob);
+      }).fail(function() {
+          toast("API Error","","Failed to submit Ansible Job","danger","30000");
       });
     });
   </script>
