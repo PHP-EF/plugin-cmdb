@@ -311,7 +311,7 @@ $app->get('/plugin/cmdb/ansible/jobs', function ($request, $response, $args) {
 
 // Submit Ansible Job
 $app->post('/plugin/cmdb/ansible/job', function ($request, $response, $args) {
-	$cmdbPlugin = new cmdbPlugin();
+	$cmdbPlugin = new cmdbPluginAnsible();
     if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-JOB'])) {
 		$data = $request->getQueryParams();
 		$DataArray = array(
