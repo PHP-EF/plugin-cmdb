@@ -313,7 +313,7 @@ $app->get('/plugin/cmdb/ansible/jobs', function ($request, $response, $args) {
 $app->post('/plugin/cmdb/ansible/job', function ($request, $response, $args) {
 	$cmdbPlugin = new cmdbPluginAnsible();
     if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-JOB'])) {
-		$data = $request->getQueryParams();
+		$data = $cmdbPlugin->api->getAPIRequestData($request);
 		$DataArray = array(
 			"extra_vars" => array()
 		);
