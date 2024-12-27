@@ -672,7 +672,11 @@ class cmdbPluginAnsible extends cmdbPlugin {
 		}
 		if ($Result) {
 		  $Output = json_decode($Result->body,true);
-		  return $Output;
+		  if (isset($Output['results'])) {
+			return $Output['results'];
+		  } else {
+			return $Output;
+		  }
 		} else {
 			$this->api->setAPIResponse('Warning','No results returned from the API');
 		}
@@ -697,16 +701,16 @@ class cmdbPluginAnsible extends cmdbPlugin {
 		$Result = $this->QueryAnsible("get", "job_templates");
 	  }
 	  if ($Result) {
-		$this->api->setAPIResponseData($Result['results']);
-		return $Result['results'];
+		$this->api->setAPIResponseData($Result);
+		return $Result;
 	  }
 	}
 	
 	public function GetAnsibleJobs($id = null) {
 	  $Result = $this->QueryAnsible("get", "jobs");
 	  if ($Result) {
-		$this->api->setAPIResponseData($Result['results']);
-		return $Result['results'];
+		$this->api->setAPIResponseData($Result);
+		return $Result;
 	  } else {
 		$this->api->setAPIResponse('Warning','No results returned from the API');
 	  }
@@ -715,8 +719,8 @@ class cmdbPluginAnsible extends cmdbPlugin {
 	public function SubmitAnsibleJob($id,$data) {
 	  $Result = $this->QueryAnsible("post", "job_templates/".$id."/launch/", $data);
 	  if ($Result) {
-		$this->api->setAPIResponseData($Result['results']);
-		return $Result['results'];
+		$this->api->setAPIResponseData($Result);
+		return $Result;
 	  } else {
 		$this->api->setAPIResponse('Warning','No results returned from the API');
 	  }
@@ -725,8 +729,8 @@ class cmdbPluginAnsible extends cmdbPlugin {
 	public function GetAnsibleLabels() {
 		$Result = $this->QueryAnsible("get", "labels/?order_by=name");
 		if ($Result) {
-			$this->api->setAPIResponseData($Result['results']);
-			return $Result['results'];
+			$this->api->setAPIResponseData($Result);
+			return $Result;
 		} else {
 			$this->api->setAPIResponse('Warning','No results returned from the API');
 		}
