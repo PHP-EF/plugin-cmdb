@@ -580,6 +580,18 @@ class cmdbPlugin extends ib {
 	}
 
 	public function _pluginGetSettings() {
+		$Ansible = new cmdbPluginAnsible();
+		$AnsibleLabels = $Ansible->GetAnsibleLabels() ?? null;
+		$AnsibleLabelsKeyValuePairs[] = [
+			"name" => "None",
+			"value" => ""
+		];
+		$AnsibleLabelsKeyValuePairs = array_merge($AnsibleLabelsKeyValuePairs,array_map(function($item) {
+			return [
+				"name" => $item.name,
+				"value" => $item.name
+			];
+		}, $AnsibleLabels));
 		return array(
 			'Plugin Settings' => array(
 				$this->settingsOption('auth', 'ACL-READ', ['label' => 'CMDB Read ACL']),
@@ -590,7 +602,7 @@ class cmdbPlugin extends ib {
 			'Ansible Settings' => array(
 				$this->settingsOption('url', 'Ansible-URL', ['label' => 'Ansible AWX URL']),
 				$this->settingsOption('token', 'Ansible-Token', ['label' => 'Ansible AWX Token']),
-				$this->settingsOption('select', 'Ansible-Tag', ['label' => 'The tag to use when filtering available jobs'])
+				$this->settingsOption('select', 'Ansible-Tag', ['label' => 'The tag to use when filtering available jobs', 'Options' => $AnsibleLabels])
 			),
 		);
 	}
@@ -683,6 +695,7 @@ class cmdbPluginAnsible extends cmdbPlugin {
 	  }
 	  if ($Result) {
 		$this->api->setAPIResponseData($Result['results']);
+		return $Result['results'];
 	  }
 	}
 	
@@ -690,6 +703,7 @@ class cmdbPluginAnsible extends cmdbPlugin {
 	  $Result = $this->QueryAnsible("get", "jobs");
 	  if ($Result) {
 		$this->api->setAPIResponseData($Result['results']);
+		return $Result['results'];
 	  } else {
 		$this->api->setAPIResponse('Warning','No results returned from the API');
 	  }
@@ -699,6 +713,7 @@ class cmdbPluginAnsible extends cmdbPlugin {
 	  $Result = $this->QueryAnsible("post", "job_templates/".$id."/launch/", $data);
 	  if ($Result) {
 		$this->api->setAPIResponseData($Result['results']);
+		return $Result['results'];
 	  } else {
 		$this->api->setAPIResponse('Warning','No results returned from the API');
 	  }
@@ -708,6 +723,7 @@ class cmdbPluginAnsible extends cmdbPlugin {
 		$Result = $this->QueryAnsible("get", "labels/?order_by=name");
 		if ($Result) {
 			$this->api->setAPIResponseData($Result['results']);
+			return $Result['results'];
 		} else {
 			$this->api->setAPIResponse('Warning','No results returned from the API');
 		}
