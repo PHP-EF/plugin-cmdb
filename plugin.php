@@ -582,16 +582,19 @@ class cmdbPlugin extends ib {
 	public function _pluginGetSettings() {
 		$Ansible = new cmdbPluginAnsible();
 		$AnsibleLabels = $Ansible->GetAnsibleLabels() ?? null;
+		$AnsibleLabelsKeyValuePairs = [];
 		$AnsibleLabelsKeyValuePairs[] = [
 			"name" => "None",
 			"value" => ""
 		];
-		$AnsibleLabelsKeyValuePairs = array_merge($AnsibleLabelsKeyValuePairs,array_map(function($item) {
-			return [
-				"name" => $item['name'],
-				"value" => $item['name']
-			];
-		}, $AnsibleLabels));
+		if ($AnsibleLabels) {
+			$AnsibleLabelsKeyValuePairs = array_merge($AnsibleLabelsKeyValuePairs,array_map(function($item) {
+				return [
+					"name" => $item['name'],
+					"value" => $item['name']
+				];
+			}, $AnsibleLabels));
+		}
 		return array(
 			'Plugin Settings' => array(
 				$this->settingsOption('auth', 'ACL-READ', ['label' => 'CMDB Read ACL']),
