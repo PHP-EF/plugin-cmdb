@@ -689,7 +689,7 @@ class cmdbPluginAnsible extends cmdbPlugin {
 	public function GetAnsibleJobs($id = null) {
 	  $Result = $this->QueryAnsible("get", "jobs");
 	  if ($Result) {
-		$this->api->setAPIResponseData($Result->results);
+		$this->api->setAPIResponseData($Result['results']);
 	  } else {
 		$this->api->setAPIResponse('Warning','No results returned from the API');
 	  }
@@ -698,7 +698,7 @@ class cmdbPluginAnsible extends cmdbPlugin {
 	public function SubmitAnsibleJob($id,$data) {
 	  $Result = $this->QueryAnsible("post", "job_templates/".$id."/launch/", $data);
 	  if ($Result) {
-		$this->api->setAPIResponseData($Result->results);
+		$this->api->setAPIResponseData($Result['results']);
 	  } else {
 		$this->api->setAPIResponse('Warning','No results returned from the API');
 	  }
@@ -707,7 +707,7 @@ class cmdbPluginAnsible extends cmdbPlugin {
 	public function GetAnsibleLabels() {
 		$Result = $this->QueryAnsible("get", "labels/?order_by=name");
 		if ($Result) {
-			$this->api->setAPIResponseData($Result->results);
+			$this->api->setAPIResponseData($Result['results']);
 		} else {
 			$this->api->setAPIResponse('Warning','No results returned from the API');
 		}
