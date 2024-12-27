@@ -310,7 +310,7 @@ $app->get('/plugin/cmdb/ansible/jobs', function ($request, $response, $args) {
 });
 
 // Submit Ansible Job
-$app->post('/plugin/cmdb/ansible/job', function ($request, $response, $args) {
+$app->post('/plugin/cmdb/ansible/job/{id}', function ($request, $response, $args) {
 	$cmdbPlugin = new cmdbPluginAnsible();
     if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-JOB'])) {
 		$data = $cmdbPlugin->api->getAPIRequestData($request);
@@ -318,12 +318,9 @@ $app->post('/plugin/cmdb/ansible/job', function ($request, $response, $args) {
 			"extra_vars" => array()
 		);
 		foreach ($data as $ReqVar => $ReqKey) {
-			if ($ReqVar != "function" && $ReqVar != "jobid") {
-				$DataArray['extra_vars'][$ReqVar] = $ReqKey;
-			}
+			$DataArray['extra_vars'][$ReqVar] = $ReqKey;
 		}
-		$JsonData = json_encode($DataArray,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES);
-		$result = $cmdbPlugin->SubmitAnsibleJob($data['jobid'], $DataArray);
+		$result = $cmdbPlugin->SubmitAnsibleJob($args['id'], $DataArray);
 		$DebugArr = array(
 			"request" => $data,
 			"response" => $result

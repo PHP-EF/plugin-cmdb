@@ -934,7 +934,7 @@
           });
       });
       
-      queryAPI("POST","/api/plugin/cmdb/ansible/job",configData).done(function(data) {
+      queryAPI("POST","/api/plugin/cmdb/ansible/job/"+jobId,configData).done(function(data) {
         var ansibleJob = data.data;
         if (ansibleJob.job) {
           $("#jobOutput").append(`<p>Job "+ansibleJob.id+" started successfully. Click <a href="'; $content .= $cmdbPlugin->config->get("Plugins","cmdb")["Ansible-URL"]; $content .= '/#/jobs/playbook/"+ansibleJob.id+"/output" target="_blank">here</a> to view the Job in Ansible</p>`);
