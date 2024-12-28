@@ -7,7 +7,7 @@
       "description": "This PHP-EF plugin provides an Asset Database (CMDB) with Ansible Integration.",
       "icon": "https://raw.githubusercontent.com/TehMuffinMoo/php-ef-plugin-cmdb/main/logo.png",
       "contact": "https://github.com/TehMuffinMoo/php-ef-plugin-cmdb/issues",
-      "website": "https://github.com/TehMuffinMoo/php-ef-plugin-cmdb",
+      "link": "https://github.com/TehMuffinMoo/php-ef-plugin-cmdb",
       "version": "1.0.4",
       "minimum_php-ef_version": "0.6.9",
       "release_date": "2024-12-20",
