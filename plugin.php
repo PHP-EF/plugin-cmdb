@@ -3,13 +3,13 @@
 // USED TO DEFINE PLUGIN INFORMATION & CLASS
 // **
 
-// PLUGIN INFORMATION
-$GLOBALS['plugins']['cmdb'] = [ // Plugin Name
-	'name' => 'cmdb', // Plugin Name
+// PLUGIN INFORMATION - This should match what is in plugin.json
+$GLOBALS['plugins']['CMDB'] = [ // Plugin Name
+	'name' => 'CMDB', // Plugin Name
 	'author' => 'TehMuffinMoo', // Who wrote the plugin
-	'category' => 'CMDB', // One to Two Word Description
+	'category' => 'Asset Database', // One to Two Word Description
 	'link' => 'https://github.com/TehMuffinMoo/php-ef-plugin-cmdb', // Link to plugin info
-	'version' => '1.0.0', // SemVer of plugin
+	'version' => '1.0.4', // SemVer of plugin
 	'image' => 'logo.png', // 1:1 non transparent image for plugin
 	'settings' => true, // does plugin need a settings modal?
 	'api' => '/api/plugin/cmdb/settings', // api route for settings page, or null if no settings page
