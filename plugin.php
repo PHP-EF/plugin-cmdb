@@ -641,30 +641,9 @@ class cmdbPluginAnsible extends cmdbPlugin {
 		} else {
 		  $Url = $Uri;
 		}
-	
-		$Options = array(
-		  'timeout' => $this->config->get("System","CURL-Timeout"),
-		  'connect_timeout' => $this->config->get("System","CURL-ConnectTimeout"),
-		  'verify' => false
-		);
-	
-		switch ($Method) {
-		  case 'get':
-			$Result = WpOrg\Requests\Requests::get($Url, $AnsibleHeaders, $Options);
-			break;
-		  case 'post':
-			$Result = WpOrg\Requests\Requests::post($Url, $AnsibleHeaders, json_encode($Data,JSON_UNESCAPED_SLASHES), $Options);
-			break;
-		  case 'put':
-			$Result = WpOrg\Requests\Requests::put($Url, $AnsibleHeaders, json_encode($Data,JSON_UNESCAPED_SLASHES), $Options);
-			break;
-		  case 'patch':
-			$Result = WpOrg\Requests\Requests::patch($Url, $AnsibleHeaders, json_encode($Data,JSON_UNESCAPED_SLASHES), $Options);
-			break;
-		  case 'delete':
-			$Result = WpOrg\Requests\Requests::delete($Url, $AnsibleHeaders, $Options);
-			break;
-		}
+		
+		$Result = $this->api->query->$Method($Url,$Data,$AnsibleHeaders);
+
 		if ($Result->status_code == "401") {
 		  $this->api->setAPIResponse('Error','Ansible API Key incorrect or expired');
 		  $this->writeLog("Ansible","Error. Ansible API Key incorrect or expired.","error");
