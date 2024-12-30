@@ -1,8 +1,7 @@
 <?php
   $cmdbPlugin = new cmdbPlugin();
-  if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-READ']) == false) {
-    die();
-  }
+  $cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-READ']) ?? die();
+
   $content = '
 
   <section class="section">
