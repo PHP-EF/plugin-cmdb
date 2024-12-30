@@ -85,7 +85,7 @@ $app->delete('/plugin/cmdb/record/{id}', function ($request, $response, $args) {
 // Get CMDB Sections
 $app->get('/plugin/cmdb/sections', function ($request, $response, $args) {
 	$cmdbPlugin = new cmdbPlugin();
-	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'] ?? null)) {
+	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'] ?? 'ACL-ADMIN')) {
         $cmdbPlugin->api->setAPIResponseData($cmdbPlugin->getSections());
 	}
 	$response->getBody()->write(jsonE($GLOBALS['api']));
@@ -97,7 +97,7 @@ $app->get('/plugin/cmdb/sections', function ($request, $response, $args) {
 // Create New CMDB Section
 $app->post('/plugin/cmdb/sections', function ($request, $response, $args) {
 	$cmdbPlugin = new cmdbPlugin();
-    if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'] ?? null)) {
+    if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'] ?? 'ACL-ADMIN')) {
         $data = $cmdbPlugin->api->getAPIRequestData($request);
         // Create the CMDB Section with the submitted data
 		if (isset($data["name"])) {
@@ -113,7 +113,7 @@ $app->post('/plugin/cmdb/sections', function ($request, $response, $args) {
 // Update CMDB Section
 $app->patch('/plugin/cmdb/section/{id}', function ($request, $response, $args) {
 	$cmdbPlugin = new cmdbPlugin();
-    if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'] ?? null)) {
+    if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'] ?? 'ACL-ADMIN')) {
         $data = $cmdbPlugin->api->getAPIRequestData($request);
         // Create the CMDB Section with the submitted data
 		if (isset($data["name"])) {
@@ -129,7 +129,7 @@ $app->patch('/plugin/cmdb/section/{id}', function ($request, $response, $args) {
 // Delete CMDB Section
 $app->delete('/plugin/cmdb/section/{id}', function ($request, $response, $args) {
 	$cmdbPlugin = new cmdbPlugin();
-    if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'] ?? null)) {
+    if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'] ?? 'ACL-ADMIN')) {
 		$cmdbPlugin->removeSection($args["id"]);
     }
 	$response->getBody()->write(jsonE($GLOBALS['api']));
@@ -143,7 +143,7 @@ $app->delete('/plugin/cmdb/section/{id}', function ($request, $response, $args) 
 // Get CMDB Columns
 $app->get('/plugin/cmdb/columns', function ($request, $response, $args) {
 	$cmdbPlugin = new cmdbPlugin();
-	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'] ?? null)) {
+	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'] ?? 'ACL-ADMIN')) {
 		$data = $request->getQueryParams();
 		if (isset($data['section'])) {
 			$cmdbPlugin->api->setAPIResponseData($cmdbPlugin->getColumnDefinitionBySectionId($data['section']));
@@ -161,7 +161,7 @@ $app->get('/plugin/cmdb/columns', function ($request, $response, $args) {
 // Create New CMDB Column
 $app->post('/plugin/cmdb/columns', function ($request, $response, $args) {
 	$cmdbPlugin = new cmdbPlugin();
-    if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'] ?? null)) {
+    if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'] ?? 'ACL-ADMIN')) {
         $data = $cmdbPlugin->api->getAPIRequestData($request);
         // Create the CMDB Section with the submitted data
 		$name = $data['name'] ?? null;
@@ -186,7 +186,7 @@ $app->post('/plugin/cmdb/columns', function ($request, $response, $args) {
 // Update CMDB Column
 $app->patch('/plugin/cmdb/column/{id}', function ($request, $response, $args) {
 	$cmdbPlugin = new cmdbPlugin();
-    if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'] ?? null)) {
+    if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'] ?? 'ACL-ADMIN')) {
         $data = $cmdbPlugin->api->getAPIRequestData($request);
         // Create the CMDB Section with the submitted data
 		if (isset($data)) {
@@ -202,7 +202,7 @@ $app->patch('/plugin/cmdb/column/{id}', function ($request, $response, $args) {
 // Update CMDB Column Weight
 $app->patch('/plugin/cmdb/column/{id}/weight', function ($request, $response, $args) {
 	$cmdbPlugin = new cmdbPlugin();
-	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'] ?? null)) {
+	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'] ?? 'ACL-ADMIN')) {
 		$data = $cmdbPlugin->api->getAPIRequestData($request);
 		if (isset($data['weight'])) {
 			if ($cmdbPlugin->updateColumnWeight($args['id'],$data['weight'])) {
@@ -223,7 +223,7 @@ $app->patch('/plugin/cmdb/column/{id}/weight', function ($request, $response, $a
 // Delete CMDB Section
 $app->delete('/plugin/cmdb/column/{id}', function ($request, $response, $args) {
 	$cmdbPlugin = new cmdbPlugin();
-    if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'] ?? null)) {
+    if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'] ?? 'ACL-ADMIN')) {
 		$cmdbPlugin->removeColumnDefinition($args["id"]);
     }
 	$response->getBody()->write(jsonE($GLOBALS['api']));
@@ -235,7 +235,7 @@ $app->delete('/plugin/cmdb/column/{id}', function ($request, $response, $args) {
 // Update CMDB Section Weight
 $app->patch('/plugin/cmdb/section/{id}/weight', function ($request, $response, $args) {
 	$cmdbPlugin = new cmdbPlugin();
-	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'] ?? null)) {
+	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'] ?? 'ACL-ADMIN')) {
 		$data = $cmdbPlugin->api->getAPIRequestData($request);
 		if (isset($data['weight'])) {
 			if ($cmdbPlugin->updateSectionWeight($args['id'],$data['weight'])) {
@@ -258,7 +258,7 @@ $app->patch('/plugin/cmdb/section/{id}/weight', function ($request, $response, $
 // Check If DB Rebuild Required
 $app->get('/plugin/cmdb/dbRebuild', function ($request, $response, $args) {
 	$cmdbPlugin = new cmdbPlugin();
-	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'] ?? null)) {
+	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'] ?? 'ACL-ADMIN')) {
 		if ($cmdbPlugin->rebuildRequired()) {
 			$cmdbPlugin->api->setAPIResponse('Warning','Database rebuild required to remove old columns.');
 		}
@@ -272,7 +272,7 @@ $app->get('/plugin/cmdb/dbRebuild', function ($request, $response, $args) {
 // Check If DB Rebuild Required
 $app->post('/plugin/cmdb/dbRebuild/initiate', function ($request, $response, $args) {
 	$cmdbPlugin = new cmdbPlugin();
-	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'] ?? null)) {
+	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'] ?? 'ACL-ADMIN')) {
 		$cmdbPlugin->updateCMDBColumns(true);
 	}
 	$response->getBody()->write(jsonE($GLOBALS['api']));
@@ -285,7 +285,7 @@ $app->post('/plugin/cmdb/dbRebuild/initiate', function ($request, $response, $ar
 //  Return list of Ansible Labels
 $app->get('/plugin/cmdb/ansible/labels', function ($request, $response, $args) {
 	$cmdbPlugin = new cmdbPluginAnsible();
-	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'] ?? null)) {
+	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'] ?? 'ACL-ADMIN')) {
 		$cmdbPlugin->GetAnsibleLabels();
 	}
 	$response->getBody()->write(jsonE($GLOBALS['api']));
