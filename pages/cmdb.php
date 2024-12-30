@@ -1,6 +1,6 @@
 <?php
   $cmdbPlugin = new cmdbPlugin();
-  if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-READ']) == false) {
+  if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-READ']) == false) {
     die();
   }
   $content = '
@@ -53,8 +53,19 @@
           </form>
         </div>
         <div class="modal-footer">';
-          if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-JOB'])) { $content .= '
-          <button type="button" class="btn btn-info" id="runJob">Run Job</button>';} $content .= '
+          if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-JOB'])) {
+            if ($cmdbPlugin->config->get('Plugins','CMDB')['Ansible-JobByLabel']) {
+              $content .= '
+              <button type="button" class="btn btn-info dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">Run Job</button>
+              <ul class="dropdown-menu">';
+                foreach ($cmdbPlugin->config->get('Plugins','CMDB')['Ansible-Tag'] as $tag) {
+                  $content .= '<li><a class="dropdown-item runJob" name="'.$tag.'">'.$tag.'</a></li>';
+                }
+                $content .= '</ul>';
+            } else {
+              $content .= '<button type="button" class="btn btn-info runJob">Run Job</button>';
+            }
+          } $content .= '
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
           <button id="modalSubmit" type="button" class="btn btn-success" onclick="saveSomething();">Save</button>
         </div>
@@ -189,7 +200,7 @@
         </div>
         <div class="modal-footer">
           <div id="jobOutput" role="alert" style="width:100%;"></div>';
-          if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-JOB'])) { $content .= '
+          if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-JOB'])) { $content .= '
           <button type="button" class="btn btn-success" id="submitJob">Submit Job</button>';} $content .= '
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         </div>
@@ -470,7 +481,7 @@
     function actionFormatter(value, row, index) {
       return [
         ';
-        if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-WRITE'])) { $content .= '
+        if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-WRITE'])) { $content .= '
           `<a class="edit" title="Edit">`,
           `<i class="fa fa-pencil"></i>`,
           `</a>&nbsp;`,
@@ -487,6 +498,7 @@
       "click .edit": function (e, value, row, index) {
         updateInputs(row);
         $("#recordModal").addClass("editModal").removeClass("newModal").modal("show");
+        $("#runJob").attr("hidden",false);
         // Update Submit Button To Edit Record
         $("#modalSubmit").attr("onclick","editRecordSubmit();");
       },
@@ -513,13 +525,14 @@
       return {
         ';
         // Check if user has Write Permission and display add button
-        if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-WRITE'])) { $content .= '
+        if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-WRITE'])) { $content .= '
         btnAddRecord: {
           text: "Add Record",
           icon: "bi-plus-lg",
           event: function() {
             // Clear all values from new record modal
             $("#recordModal input").val("").removeClass("changed");
+            $("#runJob").attr("hidden",true);
             // Update Submit Button To New Record
             $("#modalSubmit").attr("onclick","newRecordSubmit();");
             // Show new record modal
@@ -530,7 +543,7 @@
             style: "background-color:#4bbe40;border-color:#4bbe40;"
           }
         },';}
-        if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-ADMIN'])) {
+        if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'])) {
           $content .= '
           btnEditColumns: {
             text: "Edit Columns",
@@ -600,7 +613,7 @@
       return {
         ';
         // Check if user has Admin Permission and display add button
-        if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','cmdb')['ACL-ADMIN'])) { $content .= '
+        if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'])) { $content .= '
         btnAddSection: {
           text: "Add Section",
           icon: "bi-plus-lg",
@@ -885,10 +898,15 @@
       }
     }
 
-    $("#runJob").on("click", function(event) {
+    $("#recordModal").on("click", ".runJob", function(elem) {
+      if ($(this).attr("name") !== undefined) {
+          var url = "/api/plugin/cmdb/ansible/templates?label="+$(this).attr("name");
+      } else {
+          var url = "/api/plugin/cmdb/ansible/templates"
+      }
       $("#ansibleJobs").empty();
       $("#jobOutput").empty().removeClass("alert");
-      queryAPI("GET","/api/plugin/cmdb/ansible/templates").done(function(data) {
+      queryAPI("GET",url).done(function(data) {
         if (data["result"] == "Success") {
           $.each(data.data, function() {
             $("#ansibleJobs").append("<option value="+this.id+">"+this.name+"</option>");

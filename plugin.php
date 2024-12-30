@@ -605,7 +605,9 @@ class cmdbPlugin extends ib {
 			'Ansible Settings' => array(
 				$this->settingsOption('url', 'Ansible-URL', ['label' => 'Ansible AWX URL']),
 				$this->settingsOption('token', 'Ansible-Token', ['label' => 'Ansible AWX Token']),
-				$this->settingsOption('select', 'Ansible-Tag', ['label' => 'The tag to use when filtering available jobs', 'options' => $AnsibleLabelsKeyValuePairs])
+				$this->settingsOption('select-multiple', 'Ansible-Tag', ['label' => 'The tag to use when filtering available jobs', 'options' => $AnsibleLabelsKeyValuePairs]),
+				$this->settingsOption('blank'),
+				$this->settingsOption('checkbox','Ansible-JobByLabel', ['label' => 'Organise Jobs by Label'])
 			),
 		);
 	}
@@ -663,18 +665,18 @@ class cmdbPluginAnsible extends cmdbPlugin {
 	
 	public function GetAnsibleJobTemplate($id = null,$label = null) {
 	  $Filters = array();
-	  $AnsibleTag = $this->config->get("Plugins","cmdb")['Ansible-Tag'] ?? null;
+	  $AnsibleTags = $this->config->get("Plugins","cmdb")['Ansible-Tag'] ?? null;
 	  if ($label) {
-		array_push($Filters, "labels__name__icontains=$label");
-	  } elseif ($AnsibleTag) {
-		array_push($Filters, "labels__name__icontains=$AnsibleTag");
+		array_push($Filters, "labels__name__in=$label");
+	  } elseif ($AnsibleTags) {
+		array_push($Filters, "labels__name__in=".implode(',',$AnsibleTags));
 	  }
 	  if ($Filters) {
 		$filter = combineFilters($Filters);
 	  }
 	  if ($id) {
 		$Result = $this->QueryAnsible("get", "job_templates/".$id."/");
-	  } else if ($filter) {
+	  } else if (isset($filter)) {
 		$Result = $this->QueryAnsible("get", "job_templates/?".$filter);
 	  } else {
 		$Result = $this->QueryAnsible("get", "job_templates");
