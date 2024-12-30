@@ -498,7 +498,7 @@
       "click .edit": function (e, value, row, index) {
         updateInputs(row);
         $("#recordModal").addClass("editModal").removeClass("newModal").modal("show");
-        $("#runJob").attr("hidden",false);
+        $(".runJob").attr("hidden",false);
         // Update Submit Button To Edit Record
         $("#modalSubmit").attr("onclick","editRecordSubmit();");
       },
@@ -532,7 +532,7 @@
           event: function() {
             // Clear all values from new record modal
             $("#recordModal input").val("").removeClass("changed");
-            $("#runJob").attr("hidden",true);
+            $(".runJob").attr("hidden",true);
             // Update Submit Button To New Record
             $("#modalSubmit").attr("onclick","newRecordSubmit();");
             // Show new record modal
