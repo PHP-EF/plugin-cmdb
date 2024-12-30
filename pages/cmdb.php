@@ -1,7 +1,9 @@
 <?php
   $cmdbPlugin = new cmdbPlugin();
   $pluginConfig = $cmdbPlugin->config->get('Plugins','CMDB');
-  $cmdbPlugin->auth->checkAccess($pluginConfig['ACL-READ'] ?? null) ?? die();
+  if ($cmdbPlugin->auth->checkAccess($pluginConfig['ACL-READ'] ?? null) == false) {
+    die();
+  };
 
   $content = '
 
