@@ -543,7 +543,7 @@
             style: "background-color:#4bbe40;border-color:#4bbe40;"
           }
         },';}
-        if ($cmdbPlugin->auth->checkAccess($pluginConfig['ACL-ADMIN'] ?? 'ACL-ADMIN')) {
+        if ($cmdbPlugin->auth->checkAccess($pluginConfig['ACL-ADMIN'] ?: 'ACL-ADMIN')) {
           $content .= '
           btnEditColumns: {
             text: "Edit Columns",
@@ -613,7 +613,7 @@
       return {
         ';
         // Check if user has Admin Permission and display add button
-        if ($cmdbPlugin->auth->checkAccess($pluginConfig['ACL-ADMIN'] ?? 'ACL-ADMIN')) { $content .= '
+        if ($cmdbPlugin->auth->checkAccess($pluginConfig['ACL-ADMIN'] ?: 'ACL-ADMIN')) { $content .= '
         btnAddSection: {
           text: "Add Section",
           icon: "bi-plus-lg",
