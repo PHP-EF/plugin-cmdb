@@ -53,7 +53,7 @@
           </form>
         </div>
         <div class="modal-footer">';
-          if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-JOB'])) {
+          if ($cmdbPlugin->auth->checkAccess($pluginConfig['ACL-JOB'] ?? null)) {
             if ($cmdbPlugin->config->get('Plugins','CMDB')['Ansible-JobByLabel']) {
               $content .= '
               <button type="button" class="btn btn-info dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">Run Job</button>
@@ -200,7 +200,7 @@
         </div>
         <div class="modal-footer">
           <div id="jobOutput" role="alert" style="width:100%;"></div>';
-          if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-JOB'])) { $content .= '
+          if ($cmdbPlugin->auth->checkAccess($pluginConfig['ACL-JOB'] ?? null)) { $content .= '
           <button type="button" class="btn btn-success" id="submitJob">Submit Job</button>';} $content .= '
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         </div>
@@ -481,7 +481,7 @@
     function actionFormatter(value, row, index) {
       return [
         ';
-        if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-WRITE'])) { $content .= '
+        if ($cmdbPlugin->auth->checkAccess($pluginConfig['ACL-WRITE'] ?? null)) { $content .= '
           `<a class="edit" title="Edit">`,
           `<i class="fa fa-pencil"></i>`,
           `</a>&nbsp;`,
@@ -525,7 +525,7 @@
       return {
         ';
         // Check if user has Write Permission and display add button
-        if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-WRITE'])) { $content .= '
+        if ($cmdbPlugin->auth->checkAccess($pluginConfig['ACL-WRITE'] ?? null)) { $content .= '
         btnAddRecord: {
           text: "Add Record",
           icon: "bi-plus-lg",
@@ -543,7 +543,7 @@
             style: "background-color:#4bbe40;border-color:#4bbe40;"
           }
         },';}
-        if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'])) {
+        if ($cmdbPlugin->auth->checkAccess($pluginConfig['ACL-ADMIN'] ?? null)) {
           $content .= '
           btnEditColumns: {
             text: "Edit Columns",
@@ -613,7 +613,7 @@
       return {
         ';
         // Check if user has Admin Permission and display add button
-        if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'])) { $content .= '
+        if ($cmdbPlugin->auth->checkAccess($pluginConfig['ACL-ADMIN'] ?? null)) { $content .= '
         btnAddSection: {
           text: "Add Section",
           icon: "bi-plus-lg",
