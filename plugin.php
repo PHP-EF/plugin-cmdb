@@ -615,7 +615,7 @@ class cmdbPluginAnsible extends cmdbPlugin {
 	}
 
 	public function QueryAnsible($Method, $Uri, $Data = "") {
-		$cmdbConfig = $this->config->get("Plugins","cmdb");
+		$cmdbConfig = $this->config->get("Plugins","CMDB");
 		$AnsibleApiKey = $cmdbConfig["Ansible-Token"] ?? null;
 		$AnsibleUrl = $cmdbConfig['Ansible-URL'] ?? null;
 
@@ -675,7 +675,7 @@ class cmdbPluginAnsible extends cmdbPlugin {
 	
 	public function GetAnsibleJobTemplate($id = null,$label = null) {
 	  $Filters = array();
-	  $AnsibleTags = $this->config->get("Plugins","cmdb")['Ansible-Tag'] ?? null;
+	  $AnsibleTags = $this->config->get("Plugins","CMDB")['Ansible-Tag'] ?? null;
 	  if ($label) {
 		array_push($Filters, "labels__name__in=$label");
 	  } elseif ($AnsibleTags) {
