@@ -583,10 +583,6 @@ class cmdbPlugin extends ib {
 		$Ansible = new cmdbPluginAnsible();
 		$AnsibleLabels = $Ansible->GetAnsibleLabels() ?? null;
 		$AnsibleLabelsKeyValuePairs = [];
-		$AnsibleLabelsKeyValuePairs[] = [
-			"name" => "None",
-			"value" => ""
-		];
 		if ($AnsibleLabels) {
 			$AnsibleLabelsKeyValuePairs = array_merge($AnsibleLabelsKeyValuePairs,array_map(function($item) {
 				return [
@@ -624,46 +620,56 @@ class cmdbPluginAnsible extends cmdbPlugin {
 		$AnsibleUrl = $cmdbConfig['Ansible-URL'] ?? null;
 
 		if (!$AnsibleApiKey) {
-			$this->api->setAPIResponse('Error','Ansible API Key Missing');
-			return false;
+				$this->api->setAPIResponse('Error','Ansible API Key Missing');
+				return false;
 		}
 
 		if (!$AnsibleUrl) {
-			$this->api->setAPIResponse('Error','Ansible URL Missing');
-			return false;
+				$this->api->setAPIResponse('Error','Ansible URL Missing');
+				return false;
 		}
-	
+
 		$AnsibleHeaders = array(
 		 'Authorization' => "Bearer $AnsibleApiKey",
 		 'Content-Type' => "application/json"
 		);
-	
+
 		if (strpos($Uri,$AnsibleUrl."/api/") === FALSE) {
 		  $Url = $AnsibleUrl."/api/v2/".$Uri;
 		} else {
 		  $Url = $Uri;
 		}
-		
+
 		if ($Method == "get") {
 			$Result = $this->api->query->$Method($Url,$AnsibleHeaders,null,true);
 		} else {
 			$Result = $this->api->query->$Method($Url,$Data,$AnsibleHeaders,null,true);
 		}
-
-		if (isset($Result->status_code) && $Result->status_code == "401") {
-		  $this->api->setAPIResponse('Error','Ansible API Key incorrect or expired');
-		  $this->writeLog("Ansible","Error. Ansible API Key incorrect or expired.","error");
-		  return false;
+		if (isset($Result->status_code)) {
+		  if ($response->status_code >= 400 && $response->status_code < 600) {
+			switch($Result->status_code) {
+			  case 401:
+				$this->api->setAPIResponse('Error','Ansible API Key incorrect or expired');
+				$this->logging->writeLog("Ansible","Error. Ansible API Key incorrect or expired.","error");
+				break;
+			  case 404:
+				$this->api->setAPIResponse('Error','HTTP 404 Not Found');
+				break;
+			  default:
+				$this->api->setAPIResponse('Error','HTTP '.$Result->status_code);
+				break;
+			}
+		  }
 		}
-		if ($Result) {
+		if ($Result->body) {
 		  $Output = json_decode($Result->body,true);
 		  if (isset($Output['results'])) {
-			return $Output['results'];
+				return $Output['results'];
 		  } else {
-			return $Output;
+				return $Output;
 		  }
 		} else {
-			$this->api->setAPIResponse('Warning','No results returned from the API');
+				$this->api->setAPIResponse('Warning','No results returned from the API');
 		}
 	}
 	
