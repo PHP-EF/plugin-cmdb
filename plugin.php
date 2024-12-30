@@ -583,6 +583,10 @@ class cmdbPlugin extends ib {
 		$Ansible = new cmdbPluginAnsible();
 		$AnsibleLabels = $Ansible->GetAnsibleLabels() ?? null;
 		$AnsibleLabelsKeyValuePairs = [];
+		$AnsibleLabelsKeyValuePairs[] = [
+			"name" => "None",
+			"value" => ""
+		];
 		if ($AnsibleLabels) {
 			$AnsibleLabelsKeyValuePairs = array_merge($AnsibleLabelsKeyValuePairs,array_map(function($item) {
 				return [
