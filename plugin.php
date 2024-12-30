@@ -650,7 +650,7 @@ class cmdbPluginAnsible extends cmdbPlugin {
 			$Result = $this->api->query->$Method($Url,$Data,$AnsibleHeaders,null,true);
 		}
 		if (isset($Result->status_code)) {
-		  if ($response->status_code >= 400 && $response->status_code < 600) {
+		  if ($Result->status_code >= 400 && $Result->status_code < 600) {
 			switch($Result->status_code) {
 			  case 401:
 				$this->api->setAPIResponse('Error','Ansible API Key incorrect or expired');
