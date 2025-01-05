@@ -2,7 +2,8 @@
   $cmdbPlugin = new cmdbPlugin();
   $pluginConfig = $cmdbPlugin->config->get('Plugins','CMDB');
   if ($cmdbPlugin->auth->checkAccess($pluginConfig['ACL-READ'] ?? null) == false) {
-    die();
+    $ib->api->setAPIResponse('Error','Unauthorized',401);
+    return false;
   };
 
   $content = '
