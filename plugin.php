@@ -620,13 +620,21 @@ class cmdbPluginAnsible extends cmdbPlugin {
 
 	public function QueryAnsible($Method, $Uri, $Data = "") {
 		$cmdbConfig = $this->config->get("Plugins","CMDB");
-		$AnsibleApiKey = $cmdbConfig["Ansible-Token"] ?? null;
 		$AnsibleUrl = $cmdbConfig['Ansible-URL'] ?? null;
 
-		if (!$AnsibleApiKey) {
-				$this->api->setAPIResponse('Error','Ansible API Key Missing');
-				return false;
-		}
+        if (!isset($cmdbConfig['Ansible-Token']) || empty($cmdbConfig['Ansible-Token'])) {
+            $this->api->setAPIResponse('Error','Ansible API Key Missing');
+            $this->logging->writeLog("CMDB","Ansible API Key Missing","error");
+            return false;
+        } else {
+            try {
+                $AnsibleApiKey = decrypt($cmdbConfig['Ansible-Token'],$this->config->get('Security','salt'));
+            } catch (Exception $e) {
+                $this->api->setAPIResponse('Error','Unable to decrypt Ansible API Key');
+                $this->logging->writeLog('CMDB','Unable to decrypt Ansible API Key','error');
+                return false;
+            }
+        }
 
 		if (!$AnsibleUrl) {
 				$this->api->setAPIResponse('Error','Ansible URL Missing');
