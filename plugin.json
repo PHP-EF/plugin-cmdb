@@ -1,13 +1,13 @@
 [
     {
       "name": "CMDB",
-      "repo": "https://github.com/TehMuffinMoo/php-ef-plugin-cmdb",
+      "repo": "https://github.com/php-ef/plugin-cmdb",
       "author": "TehMuffinMoo",
       "category": "Asset Database",
       "description": "This PHP-EF plugin provides an Asset Database (CMDB) with Ansible Integration.",
-      "icon": "https://raw.githubusercontent.com/TehMuffinMoo/php-ef-plugin-cmdb/main/logo.png",
-      "contact": "https://github.com/TehMuffinMoo/php-ef-plugin-cmdb/issues",
-      "link": "https://github.com/TehMuffinMoo/php-ef-plugin-cmdb",
+      "icon": "https://raw.githubusercontent.com/php-ef/plugin-cmdb/main/logo.png",
+      "contact": "https://github.com/php-ef/plugin-cmdb/issues",
+      "link": "https://github.com/php-ef/plugin-cmdb",
       "version": "1.0.5",
       "minimum_php-ef_version": "0.6.9",
       "release_date": "2024-12-20",
