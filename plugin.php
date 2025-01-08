@@ -15,7 +15,7 @@ $GLOBALS['plugins']['CMDB'] = [ // Plugin Name
 	'api' => '/api/plugin/cmdb/settings', // api route for settings page, or null if no settings page
 ];
 
-class cmdbPlugin extends ib {
+class cmdbPlugin extends phpef {
 	private $sql;
 
 	public function __construct() {
