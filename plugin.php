@@ -581,7 +581,7 @@ class cmdbPlugin extends phpef {
 
 	public function _pluginGetSettings() {
 		$Ansible = new cmdbPluginAnsible();
-		$AnsibleLabels = $Ansible->GetAnsibleLabels() ?? null;
+		$AnsibleLabels = $Ansible->GetAnsibleLabels() ?? [];
 		$AnsibleLabelsKeyValuePairs = [];
 		$AnsibleLabelsKeyValuePairs[] = [
 			"name" => "None",
@@ -681,7 +681,9 @@ class cmdbPluginAnsible extends cmdbPlugin {
 				return $Output;
 		  }
 		} else {
+			if (!$GLOBALS['api']['data']) {
 				$this->api->setAPIResponse('Warning','No results returned from the API');
+			}
 		}
 	}
 	
