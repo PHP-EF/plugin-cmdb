@@ -284,7 +284,7 @@ $app->post('/plugin/cmdb/dbRebuild/initiate', function ($request, $response, $ar
 // ** ANSIBLE ** //
 //  Return list of Ansible Labels
 $app->get('/plugin/cmdb/ansible/labels', function ($request, $response, $args) {
-	$cmdbPlugin = new cmdbPluginAnsible();
+	$cmdbPlugin = new awxPluginAnsible();
 	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'] ?: 'ACL-ADMIN')) {
 		$cmdbPlugin->GetAnsibleLabels();
 	}
@@ -296,7 +296,7 @@ $app->get('/plugin/cmdb/ansible/labels', function ($request, $response, $args) {
 
 //  Return list of Ansible Job Templates
 $app->get('/plugin/cmdb/ansible/templates', function ($request, $response, $args) {
-	$cmdbPlugin = new cmdbPluginAnsible();
+	$cmdbPlugin = new awxPluginAnsible();
 	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-JOB'] ?? null)) {
 		$data = $request->getQueryParams();
 		$Label = $data['label'] ?? null;
@@ -311,7 +311,7 @@ $app->get('/plugin/cmdb/ansible/templates', function ($request, $response, $args
 
 //  Return list of Ansible Jobs
 $app->get('/plugin/cmdb/ansible/jobs', function ($request, $response, $args) {
-	$cmdbPlugin = new cmdbPluginAnsible();
+	$cmdbPlugin = new awxPluginAnsible();
 	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-JOB'] ?? null)) {
 		$cmdbPlugin->GetAnsibleJobs();
 	}
@@ -323,7 +323,7 @@ $app->get('/plugin/cmdb/ansible/jobs', function ($request, $response, $args) {
 
 // Submit Ansible Job
 $app->post('/plugin/cmdb/ansible/job/{id}', function ($request, $response, $args) {
-	$cmdbPlugin = new cmdbPluginAnsible();
+	$cmdbPlugin = new awxPluginAnsible();
     if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-JOB'] ?? null)) {
 		$data = $cmdbPlugin->api->getAPIRequestData($request);
 		$DataArray = array(
