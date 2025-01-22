@@ -8,7 +8,7 @@
 
   $content = '
 
-  <section class="section">
+  <div class="container-fluid">
     <div class="row">
       <div class="col-lg-12">
         <div class="card">
@@ -57,11 +57,13 @@
         </div>
         <div class="modal-footer">';
           if ($cmdbPlugin->auth->checkAccess($pluginConfig['ACL-JOB'] ?? null)) {
-            if ($cmdbPlugin->config->get('Plugins','CMDB')['Ansible-JobByLabel']) {
+            $JobByLabel = $cmdbPlugin->config->get('Plugins','CMDB')['Ansible-JobByLabel'] ?? null;
+            if ($JobByLabel) {
               $content .= '
               <button type="button" class="btn btn-info dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">Run Job</button>
               <ul class="dropdown-menu">';
-                foreach ($cmdbPlugin->config->get('Plugins','CMDB')['Ansible-Tag'] as $tag) {
+                $AnsibleTags = $cmdbPlugin->config->get('Plugins','CMDB')['Ansible-Tag'] ?? [];
+                foreach ($AnsibleTags as $tag) {
                   $content .= '<li><a class="dropdown-item runJob" name="'.$tag.'">'.$tag.'</a></li>';
                 }
                 $content .= '</ul>';
@@ -174,6 +176,12 @@
               <small class="form-text text-muted" id="columnVisibleHelp">Whether the field is visible in the table view by default</small>
             </div>
           </div>
+          <hr>
+          <div class="form-group">
+            <label for="columnSqlName">SQL Column Name</label>
+            <input type="text" class="form-control" id="columnSqlName" disabled>
+            <small class="form-text text-muted" id="columnSqlNameHelp">The name of the column within the SQL Database</small>
+          </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -212,6 +220,23 @@
   </div>
 
   <script>
+    // ** Modal Listeners
+    // Column / Section Manage Modals
+    $("#columnModal, #sectionModal").on("show.bs.modal", function () {
+      $("#manageModal").modal("hide");
+    });
+    $("#columnModal, #sectionModal").on("hidden.bs.modal", function () {
+        $("#manageModal").modal("show");
+    });
+
+    // Record / Ansible Modals
+    $("#ansibleJobSelectModal").on("show.bs.modal", function () {
+      $("#recordModal").modal("hide");
+    });
+    $("#ansibleJobSelectModal").on("hidden.bs.modal", function () {
+        $("#recordModal").modal("show");
+    });
+
     // Function to check if database requires rebuild
     var rebuildRequired = false;
     queryAPI("GET","/api/plugin/cmdb/dbRebuild").done(function(data) {
@@ -672,6 +697,7 @@
         $("#columnDataType").val(row.dataType);
         $("#columnFieldType").val(row.fieldType);
         $("#columnVisible").prop("checked", row.visible);
+        $("#columnSqlName").val(row.columnName);
         // Populate Column Dropdown
         updateSectionDropdown(row);
         // Show Column Modal
