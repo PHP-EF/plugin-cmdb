@@ -12,6 +12,9 @@
       "minimum_php-ef_version": "0.6.9",
       "release_date": "2024-12-20",
       "last_updated": "2024-12-30",
-      "github_folder": ""
+      "github_folder": "",
+      "requires": [
+        "awx"
+      ]
     }
 ]
