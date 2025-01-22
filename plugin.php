@@ -580,7 +580,7 @@ class cmdbPlugin extends phpef {
 	}
 
 	public function _pluginGetSettings() {
-		$Ansible = new cmdbPluginAnsible();
+		$Ansible = new awxPluginAnsible();
 		$AnsibleLabels = $Ansible->GetAnsibleLabels() ?? [];
 		$AnsibleLabelsKeyValuePairs = [];
 		$AnsibleLabelsKeyValuePairs[] = [
