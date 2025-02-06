@@ -29,7 +29,7 @@ $app->get('/plugin/cmdb/layout', function ($request, $response, $args) {
 $app->get('/plugin/cmdb/records', function ($request, $response, $args) {
 	$cmdbPlugin = new cmdbPlugin();
 	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-READ'] ?? null)) {
-        $cmdbPlugin->api->setAPIResponseData($cmdbPlugin->getAllRecords());
+        $GLOBALS['api']['data'] = $cmdbPlugin->getAllRecords() ?? [];
 	}
 	$response->getBody()->write(jsonE($GLOBALS['api']));
 	return $response
