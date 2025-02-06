@@ -9,7 +9,7 @@ $GLOBALS['plugins']['CMDB'] = [ // Plugin Name
 	'author' => 'TehMuffinMoo', // Who wrote the plugin
 	'category' => 'Asset Database', // One to Two Word Description
 	'link' => 'https://github.com/php-ef/plugin-cmdb', // Link to plugin info
-	'version' => '1.0.5', // SemVer of plugin
+	'version' => '1.0.6', // SemVer of plugin
 	'image' => 'logo.png', // 1:1 non transparent image for plugin
 	'settings' => true, // does plugin need a settings modal?
 	'api' => '/api/plugin/cmdb/settings', // api route for settings page, or null if no settings page
@@ -188,7 +188,7 @@ class cmdbPlugin extends phpef {
 			// Check if there are columns to remove
 			if (count($columns_to_keep) < count($current_columns)) {
 				// Create a new table with the desired columns
-				$create_table_sql = "CREATE TABLE cmdb_new (id INT AUTO_INCREMENT PRIMARY KEY, " . implode(", ", array_map(function($col, $type) {
+				$create_table_sql = "CREATE TABLE cmdb_new (id INTEGER PRIMARY KEY AUTOINCREMENT, " . implode(", ", array_map(function($col, $type) {
 					return "$col $type";
 				}, array_keys(array_slice($columns_to_keep, 1, null, true)), array_slice($columns_to_keep, 1, null, true))) . ")";
 				
@@ -289,12 +289,12 @@ class cmdbPlugin extends phpef {
 		if (!$SkipChecks) {
 			// Check if 'fqdn' exists as a value in 'columnName' within cmdb_columns
 			$dbquery = $this->sql->prepare('SELECT EXISTS (SELECT 1 FROM cmdb_columns WHERE columnName = :columnName COLLATE NOCASE)');
-			$dbquery->execute([":columnName" => 'fqdn']);
+			$dbquery->execute([":columnName" => $columnName]);
 			$existsInColumns = $dbquery->fetchColumn();
 
 			// Check if 'fqdn' is an actual column in the 'cmdb' table
 			$dbquery = $this->sql->prepare("SELECT EXISTS (SELECT 1 FROM pragma_table_info('cmdb') WHERE name = :name COLLATE NOCASE)");
-			$dbquery->execute([":name" => 'fqdn']);
+			$dbquery->execute([":name" => $columnName]);
 			$existsAsColumn = $dbquery->fetchColumn();
 		} else {
 			$existsInColumns = false;
@@ -602,6 +602,40 @@ class cmdbPlugin extends phpef {
 		} else {
 			$this->api->setAPIResponse("Error","CMDB record does not exist");
 		}
+	}
+
+	public function buildCMDBForm() {
+		$Sections = $this->getSections();
+		$Columns = $this->getColumnDefinitions();
+	
+		// Sort sections by weight
+		usort($Sections, function($a, $b) {
+			return $a['weight'] <=> $b['weight'];
+		});
+	
+		// Sort columns by weight within each section
+		usort($Columns, function($a, $b) {
+			return $a['weight'] <=> $b['weight'];
+		});
+	
+		$settings = array();
+	
+		foreach ($Sections as $section) {
+			$sectionName = $section['name'];
+			$settings[$sectionName] = array();
+	
+			foreach ($Columns as $column) {
+				if ($column['section'] == $section['id']) {
+					$fieldType = strtolower($column['fieldType']);
+					$settings[$sectionName][] = $this->settingsOption($fieldType, $column['columnName'], [
+						'label' => $column['name'],
+						'description' => $column['description']
+					]);
+				}
+			}
+		}
+	
+		return $settings;
 	}
 
 	public function _pluginGetSettings() {

@@ -40,20 +40,16 @@
     <br>
   </section>
 
-
-  <!-- Record Modal -->
-  <div class="modal fade" id="recordModal" tabindex="-1" role="dialog" aria-labelledby="recordModalLabel" aria-hidden="true">
+  <div class="modal fade" id="CMDBModal" tabindex="-1" role="dialog" aria-labelledby="CMDBModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="recordModalLabel">CMDB Record</h5>
+          <h5 class="modal-title" id="CMDBModalLabel">CMDB Record</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
             <span aria-hidden="true"></span>
           </button>
         </div>
-        <div class="modal-body" id="recordModelBody">
-          <form id="recordForm">
-          </form>
+        <div class="modal-body" id="CMDBModalBody">
         </div>
         <div class="modal-footer">';
           if ($cmdbPlugin->auth->checkAccess($pluginConfig['ACL-JOB'] ?? null)) {
@@ -72,7 +68,7 @@
             }
           } $content .= '
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <button id="modalSubmit" type="button" class="btn btn-success" onclick="saveSomething();">Save</button>
+          <button id="CMDBModalSubmit" type="button" class="btn btn-success" onclick="saveSomething();">Save</button>
         </div>
       </div>
     </div>
@@ -146,19 +142,12 @@
             <small class="form-text text-muted" id="columnDescriptionHelp">The description of the CMDB Column</small>
           </div>
           <div class="form-group">
-            <label for="columnDataType">Data Type</label>
-            <select class="form-select" id="columnDataType" aria-describedby="columnDataTypeHelp">
-              <option value="TEXT">Text</option>
-              <option value="INTEGER">Integer</option>
-              <option value="BOOLEAN">Boolean</option>
-            </select>
-            <small class="form-text text-muted" id="columnDataTypeHelp">The CMDB Column Data Type</small>
-          </div>
-          <div class="form-group">
             <label for="columnFieldType">Field Type</label>
             <select class="form-select" id="columnFieldType" aria-describedby="columnFieldTypeHelp">
-              <option value="INPUT">Input</option>
+              <option value="INPUT">Text</option>
               <option value="SELECT" disabled>Select</option>
+              <option value="NUMBER">Number</option>
+              <option value="CHECKBOX">Checkbox</option>
             </select>
             <small class="form-text text-muted" id="columnFieldTypeHelp">The CMDB Column Field Type</small>
           </div>
@@ -263,7 +252,7 @@
         rowAttributes: "rowAttributes",
         onReorderRow: onReorderSectionsRow,
         detailView: true,
-        detailFormatter: detailFormatter,
+        cmdbDetailFormatter: cmdbDetailFormatter,
         onExpandRow: buildColumnsTable,
         buttons: "sectionButtons",
         columns: [{
@@ -279,7 +268,7 @@
           visible: false
         },{
           title: "Actions",
-          formatter: "actionFormatter",
+          formatter: "cmdbActionFormatter",
           events: "sectionActionEvents"
         }]
       });
@@ -358,7 +347,7 @@
           visible: false
         },{
           title: "Actions",
-          formatter: "actionFormatter",
+          formatter: "cmdbActionFormatter",
           events: "columnActionEvents"
         }]
       });
@@ -372,7 +361,7 @@
       return html.join("");
     }
 
-    function detailFormatter(index, row) {
+    function cmdbDetailFormatter(index, row) {
       let html = [];
       if (row) {
         html.push(createTableHtml(index, Array.isArray(row) ? row.Items : Object.values(row)));
@@ -393,7 +382,7 @@
       columns.push({
           field: "actions",
           title: "Actions",
-          formatter: "actionFormatter",
+          formatter: "cmdbActionFormatter",
           events: "cmdbActionEvents"
       });
 
@@ -416,97 +405,8 @@
       });
     }
 
-    function createForm(jsonData) {
-      const formDiv = document.getElementById("recordForm"); // Make sure there\'s a div with id "formDiv" in your HTML
-      const sections = {};
-
-      // Group items by section_name
-      jsonData.forEach(item => {
-          if (!sections[item.section_name]) {
-              sections[item.section_name] = [];
-          }
-          sections[item.section_name].push(item);
-      });
-
-      // Sort sections by section_weight
-      const sortedSections = Object.keys(sections).sort((a, b) => {
-          const sectionA = sections[a][0].section_weight;
-          const sectionB = sections[b][0].section_weight;
-          return sectionA - sectionB;
-      });
-
-      // Create form sections and items
-      sortedSections.forEach(sectionName => {
-          const sectionItems = sections[sectionName];
-
-          // Create section header
-          const sectionHeader = document.createElement("h3");
-          sectionHeader.innerText = sectionName;
-          formDiv.appendChild(sectionHeader);
-
-          // Sort items by column_weight
-          sectionItems.sort((a, b) => a.column_weight - b.column_weight);
-
-          const id = document.createElement("input");
-          id.id = "recordId";
-          id.hidden = true;
-          formDiv.appendChild(id);
-
-          // Create form items for each section
-          sectionItems.forEach(item => {
-              const formGroup = document.createElement("div");
-              formGroup.className = "form-group";
-
-              const label = document.createElement("label");
-              label.htmlFor = `record${item.columnName}`;
-              label.innerText = item.name;
-
-              const input = document.createElement("input");
-              input.type = item.dataType === "INTEGER" ? "number" : "text";
-              input.className = "form-control info-field";
-              input.id = `record${item.columnName}`;
-              input.name = item.columnName;
-
-              const small = document.createElement("small");
-              small.innerText = item.description;
-              small.className = "form-text text-muted";
-              small.id = `record${item.columnName}Help`;
-
-              formGroup.appendChild(label);
-              formGroup.appendChild(input);
-              formGroup.appendChild(small);
-              formDiv.appendChild(formGroup);
-          });
-
-          formDiv.appendChild(document.createElement("br"));
-      });
-
-      // Detect Changes
-      $(".info-field").change(function(elem) {
-        toast("Configuration","",$(elem.target.previousElementSibling).text()+" has changed.<br><small>Save configuration to apply changes.</small>","warning");
-        $(this).addClass("changed");
-      });
-    }
-
-    // Function to update elements
-    function updateInputs(row) {
-      $("#recordModal input").val("").removeClass("changed");
-      for (const key in row) {
-        if (row.hasOwnProperty(key)) {
-          $(`#record${key}`).val(row[key]);
-        }
-      }
-      $("#recordId").val(row.id);
-    }
-
-    // Build Form & Table Layout
-    queryAPI("GET", "/api/plugin/cmdb/layout").done(function(data) {
-      buildCMDBTable(data.data);
-      createForm(data.data);
-    });
-
     // CMDB Row Actions Buttons
-    function actionFormatter(value, row, index) {
+    function cmdbActionFormatter(value, row, index) {
       return [
         ';
         if ($cmdbPlugin->auth->checkAccess($pluginConfig['ACL-WRITE'] ?? null)) { $content .= '
@@ -524,11 +424,9 @@
     // CMDB Row Action Events
     window.cmdbActionEvents = {
       "click .edit": function (e, value, row, index) {
-        updateInputs(row);
-        $("#recordModal").addClass("editModal").removeClass("newModal").modal("show");
+        buildCMDBModal(row,"editRecordSubmit();");
+        $("#CMDBModal").addClass("editModal").removeClass("newModal").modal("show");
         $(".runJob").attr("hidden",false);
-        // Update Submit Button To Edit Record
-        $("#modalSubmit").attr("onclick","editRecordSubmit();");
       },
       "click .delete": function (e, value, row, index) {
         if(confirm("Are you sure you want to delete "+row.id+" from the CMDB? This is irriversible.") == true) {
@@ -559,12 +457,9 @@
           icon: "bi-plus-lg",
           event: function() {
             // Clear all values from new record modal
-            $("#recordModal input").val("").removeClass("changed");
-            $(".runJob").attr("hidden",true);
-            // Update Submit Button To New Record
-            $("#modalSubmit").attr("onclick","newRecordSubmit();");
-            // Show new record modal
-            $("#recordModal").modal("show");
+            buildCMDBModal({},"newRecordSubmit();");
+            $("#CMDBModal").addClass("newModal").removeClass("editModal").modal("show");
+            $(".runJob").attr("hidden",false);
           },
           attributes: {
             title: "Add a CMDB record",
@@ -694,7 +589,6 @@
         // Populate Column Fields
         $("#columnName").val(row.name);
         $("#columnDescription").val(row.description);
-        $("#columnDataType").val(row.dataType);
         $("#columnFieldType").val(row.fieldType);
         $("#columnVisible").prop("checked", row.visible);
         $("#columnSqlName").val(row.columnName);
@@ -725,10 +619,10 @@
     }
 
     function newRecordSubmit() {
-      var formData = $("#recordForm .changed").serializeArray();
+      var formData = $("#CMDBModal .changed").serializeArray();
       
       // Include unchecked checkboxes in the formData
-      $("#recordForm input.changed[type=checkbox]").each(function() {
+      $("#CMDBModal input.changed[type=checkbox]").each(function() {
           formData.push({ name: this.name, value: this.checked ? true : false });
       });
 
@@ -751,7 +645,7 @@
         if (data["result"] == "Success") {
             toast(data["result"],"",data["message"],"success");
             $("#cmdbTable").bootstrapTable("refresh");
-            $("#recordModal").modal("hide");
+            $("#CMDBModal").modal("hide");
         } else if (data["result"] == "Error") {
             toast(data["result"],"",data["message"],"danger");
         } else {
@@ -761,12 +655,11 @@
     }
 
     function editRecordSubmit() {
-      var id = $("#recordId").val();
-      console.log(id);
-      var formData = $("#recordForm .changed").serializeArray();
+      var id = $(\'[name="recordId"]\').val();
+      var formData = $("#CMDBModal .changed").serializeArray();
       
       // Include unchecked checkboxes in the formData
-      $("#recordForm input.changed[type=checkbox]").each(function() {
+      $("#CMDBModal input.changed[type=checkbox]").each(function() {
           formData.push({ name: this.name, value: this.checked ? true : false });
       });
 
@@ -789,7 +682,7 @@
         if (data["result"] == "Success") {
             toast(data["result"],"",data["message"],"success");
             $("#cmdbTable").bootstrapTable("refresh");
-            $("#recordModal").modal("hide");
+            $("#CMDBModal").modal("hide");
         } else if (data["result"] == "Error") {
             toast(data["result"],"",data["message"],"danger");
         } else {
@@ -846,7 +739,7 @@
       var postArr = {
           "name": $("#columnName").val() ?? null,
           "description": $("#columnDescription").val() ?? null,
-          "dataType": $("#columnDataType").val() ?? null,
+          "dataType": determineDataType($("#columnFieldType").val()) ?? null,
           "fieldType": $("#columnFieldType").val() ?? null,
           "section": $("#columnSection").val() ?? null,
           "visible": $("#columnVisible").val() ?? null,
@@ -874,7 +767,7 @@
       var postArr = {
           "name": $("#columnName").val() ?? null,
           "description": $("#columnDescription").val() ?? null,
-          "dataType": $("#columnDataType").val() ?? null,
+          "dataType": determineDataType($("#columnFieldType").val()) ?? null,
           "fieldType": $("#columnFieldType").val() ?? null,
           "section": $("#columnSection").val() ?? null,
           "visible": $("#columnVisible").is(":checked"),
@@ -1000,6 +893,61 @@
       }).fail(function() {
           toast("API Error","","Failed to submit Ansible Job","danger","30000");
       });
+    });
+
+
+
+
+    function buildCMDBModal(row = {}, saveFunction = null, size = "xxl") {
+      // Clear Modal Content
+      $("#CMDBModalBody").html("");
+      $("#CMDBModal .modal-dialog").removeClass("modal-xs modal-sm modal-md modal-lg modal-xl modal-xxl").addClass(`modal-${size}`);
+      // Empty the additional settings array
+
+      try {
+        queryAPI("GET", "/api/plugin/cmdb/layout/form").done(function(cmdbRecordSettings) {
+          const settingsData = cmdbRecordSettings.data;
+          $("#CMDBModalBody").html(buildFormGroup(settingsData));
+          $("#CMDBModalSubmit").attr("onclick", saveFunction);
+          $("#CMDBModalLabel").text(`CMDB Record`);
+
+          if (Object.keys(row).length > 0) {
+            for (const key in row) {
+                if (row.hasOwnProperty(key)) {
+                    const value = row[key];
+                    $(`[name=${key}]`).val(value);
+                }
+            }
+            if (row["id"]) {
+              $("#CMDBModalBody").append(`<input name="recordId" value="${row["id"]}" hidden>`);
+            }
+          }
+
+        }).fail(function(xhr) {
+          logConsole("Error", xhr, "error");
+        });
+      } catch (e) {
+        logConsole("Error", e, "error");
+      }
+      // Show Modal
+      $("#CMDBModal").modal("show");
+    }
+
+    function determineDataType(fieldType) {
+      switch(fieldType) {
+        case "INPUT":
+        case "SELECT":
+          return "TEXT";
+        case "NUMBER":
+          return "INTEGER";
+        case "CHECKBOX":
+          return "BOOLEAN";
+      }
+    };
+
+    // Build Table
+    queryAPI("GET", "/api/plugin/cmdb/layout/table").done(function(data) {
+      buildCMDBTable(data.data);
     });
   </script>
 ';

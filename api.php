@@ -11,11 +11,23 @@ $app->get('/plugin/cmdb/settings', function ($request, $response, $args) {
 		->withStatus($GLOBALS['responseCode']);
 });
 
-// Get CMDB Layout (Used to build the tables & form)
-$app->get('/plugin/cmdb/layout', function ($request, $response, $args) {
+// Get CMDB Layout (Used to build the table)
+$app->get('/plugin/cmdb/layout/table', function ($request, $response, $args) {
 	$cmdbPlugin = new cmdbPlugin();
 	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-READ'] ?? null)) {
         $cmdbPlugin->api->setAPIResponseData($cmdbPlugin->getColumnsAndSections());
+	}
+	$response->getBody()->write(jsonE($GLOBALS['api']));
+	return $response
+		->withHeader('Content-Type', 'application/json;charset=UTF-8')
+		->withStatus($GLOBALS['responseCode']);
+});
+
+// Get CMDB Layout (Used to build the form)
+$app->get('/plugin/cmdb/layout/form', function ($request, $response, $args) {
+	$cmdbPlugin = new cmdbPlugin();
+	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-READ'] ?? null)) {
+        $cmdbPlugin->api->setAPIResponseData($cmdbPlugin->buildCMDBForm());
 	}
 	$response->getBody()->write(jsonE($GLOBALS['api']));
 	return $response
