@@ -114,16 +114,16 @@ class cmdbPlugin extends phpef {
 			['Memory','Memory (GB)','The allocated memory of the server','INTEGER','INPUT',3,TRUE,2]
 		];
 
+		$ColumnDefinitions = $this->getColumnDefinitions();
 		foreach ($BaseColumns as $BaseColumn) {
-			$ColumnDefinitions = $this->getColumnDefinitions();
 			if (!in_array($BaseColumn[0],array_column($ColumnDefinitions,"name"))) {
-				$this->addColumnDefinition($BaseColumn[0],$BaseColumn[1],$BaseColumn[2],$BaseColumn[3],$BaseColumn[4],$BaseColumn[5],$BaseColumn[6],$BaseColumn[7]);
+				$this->addColumnDefinition($BaseColumn[0],$BaseColumn[1],$BaseColumn[2],$BaseColumn[3],$BaseColumn[4],$BaseColumn[5],$BaseColumn[6],$BaseColumn[7],true);
 			}
 		}
+		$Columns = $this->getDefinedColumns();
 		foreach ($BaseColumns as $BaseColumn) {
-			$Columns = $this->getDefinedColumns();
 			if (!in_array($BaseColumn[0],$Columns)) {
-				$this->AddColumn($BaseColumn[0],$BaseColumn[2]);
+				$this->addColumn($BaseColumn[0],$BaseColumn[2]);
 			}
 		}
 	}
@@ -181,12 +181,17 @@ class cmdbPlugin extends phpef {
 		if ($rebuild) {
 			// Collect columns to keep
 			$columns_to_keep = array_intersect_key($current_columns, $latest_columns);
+			
+			// Ensure the 'id' column is kept and set as the first column
+			$columns_to_keep = ['id' => $current_columns['id']] + $columns_to_keep;
+		
 			// Check if there are columns to remove
 			if (count($columns_to_keep) < count($current_columns)) {
 				// Create a new table with the desired columns
-				$create_table_sql = "CREATE TABLE cmdb_new (" . implode(", ", array_map(function($col, $type) {
+				$create_table_sql = "CREATE TABLE cmdb_new (id INT AUTO_INCREMENT PRIMARY KEY, " . implode(", ", array_map(function($col, $type) {
 					return "$col $type";
-				}, array_keys($columns_to_keep), $columns_to_keep)) . ")";
+				}, array_keys(array_slice($columns_to_keep, 1, null, true)), array_slice($columns_to_keep, 1, null, true))) . ")";
+				
 				if ($this->sql->query($create_table_sql)) {
 					// Copy data from the old table to the new table
 					$columns_list = implode(", ", array_keys($columns_to_keep));
@@ -276,20 +281,25 @@ class cmdbPlugin extends phpef {
 	}
 
 	// Add new column definition to CMDB Columns Table
-	public function addColumnDefinition($columnName,$name,$columnDescription,$dataType,$fieldType,$SectionID,$Visible,$Weight = null) {
+	public function addColumnDefinition($columnName,$name,$columnDescription,$dataType,$fieldType,$SectionID,$Visible,$Weight = null,$SkipChecks = false) {
 		$dbquery = $this->sql->prepare('SELECT EXISTS (SELECT 1 FROM cmdb_columns WHERE columnName = :columnName OR name = :name COLLATE NOCASE);');
 		$dbquery->execute([":columnName" => $columnName,":name" => $name]);
 		$results = $dbquery->fetchColumn() > 0;
 
-		// Check if 'fqdn' exists as a value in 'columnName' within cmdb_columns
-		$dbquery = $this->sql->prepare('SELECT EXISTS (SELECT 1 FROM cmdb_columns WHERE columnName = :columnName COLLATE NOCASE)');
-		$dbquery->execute([":columnName" => 'fqdn']);
-		$existsInColumns = $dbquery->fetchColumn();
+		if (!$SkipChecks) {
+			// Check if 'fqdn' exists as a value in 'columnName' within cmdb_columns
+			$dbquery = $this->sql->prepare('SELECT EXISTS (SELECT 1 FROM cmdb_columns WHERE columnName = :columnName COLLATE NOCASE)');
+			$dbquery->execute([":columnName" => 'fqdn']);
+			$existsInColumns = $dbquery->fetchColumn();
 
-		// Check if 'fqdn' is an actual column in the 'cmdb' table
-		$dbquery = $this->sql->prepare("SELECT EXISTS (SELECT 1 FROM pragma_table_info('cmdb') WHERE name = :name COLLATE NOCASE)");
-		$dbquery->execute([":name" => 'fqdn']);
-		$existsAsColumn = $dbquery->fetchColumn();
+			// Check if 'fqdn' is an actual column in the 'cmdb' table
+			$dbquery = $this->sql->prepare("SELECT EXISTS (SELECT 1 FROM pragma_table_info('cmdb') WHERE name = :name COLLATE NOCASE)");
+			$dbquery->execute([":name" => 'fqdn']);
+			$existsAsColumn = $dbquery->fetchColumn();
+		} else {
+			$existsInColumns = false;
+			$existsAsColumn = false;
+		}
 
 		if ($existsInColumns || $existsAsColumn) {
 			if ($this->rebuildRequired()) {
