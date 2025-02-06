@@ -158,7 +158,7 @@
             <label for="columnFieldType">Field Type</label>
             <select class="form-select" id="columnFieldType" aria-describedby="columnFieldTypeHelp">
               <option value="INPUT">Input</option>
-              <option value="SELECT" disabled>Select</option>
+              <option value="SELECT">Select</option>
             </select>
             <small class="form-text text-muted" id="columnFieldTypeHelp">The CMDB Column Field Type</small>
           </div>

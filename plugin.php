@@ -280,7 +280,25 @@ class cmdbPlugin extends phpef {
 		$dbquery = $this->sql->prepare('SELECT EXISTS (SELECT 1 FROM cmdb_columns WHERE columnName = :columnName OR name = :name COLLATE NOCASE);');
 		$dbquery->execute([":columnName" => $columnName,":name" => $name]);
 		$results = $dbquery->fetchColumn() > 0;
-		if (!$results) {
+
+		// Check if 'fqdn' exists as a value in 'columnName' within cmdb_columns
+		$dbquery = $this->sql->prepare('SELECT EXISTS (SELECT 1 FROM cmdb_columns WHERE columnName = :columnName COLLATE NOCASE)');
+		$dbquery->execute([":columnName" => 'fqdn']);
+		$existsInColumns = $dbquery->fetchColumn();
+
+		// Check if 'fqdn' is an actual column in the 'cmdb' table
+		$dbquery = $this->sql->prepare("SELECT EXISTS (SELECT 1 FROM pragma_table_info('cmdb') WHERE name = :name COLLATE NOCASE)");
+		$dbquery->execute([":name" => 'fqdn']);
+		$existsAsColumn = $dbquery->fetchColumn();
+
+		if ($existsInColumns || $existsAsColumn) {
+			if ($this->rebuildRequired()) {
+				$this->api->setAPIResponse('Error','Column already exists. DB Rebuild is required');
+				return false;
+			}
+			$this->api->setAPIResponse('Error','Column already exists.');
+			return false;
+		} else {
 			if ($Weight) {
 				$dbquery = $this->sql->prepare("INSERT INTO cmdb_columns (columnName, name, description, dataType, fieldType, section, visible, weight) VALUES (:columnName, :name, :description, :dataType, :fieldType, :section, :visible, :weight);");
 				$execute = [":columnName" => $columnName,":name" => $name,":description" => $columnDescription, ":dataType" => $dataType, ":fieldType" => $fieldType, ":section" => $SectionID, ":visible" => $Visible, ":weight" => $Weight];
@@ -293,9 +311,6 @@ class cmdbPlugin extends phpef {
 				$this->updateCMDBColumns();
 				return true;
 			}
-		} else {
-			$this->api->setAPIResponse('Error','Column already exists');
-			return false;
 		}
 		$this->api->setAPIResponse('Error','Failed to add column');
 		return false;
