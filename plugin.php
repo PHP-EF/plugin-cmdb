@@ -701,7 +701,7 @@ class cmdbPlugin extends phpef {
 				$this->settingsOption('input', 'cmdbDescription', ['label' => 'The CMDB Description', 'placeholder' => 'A CMDB.', 'help' => 'This is the descriptive text displayed at the top of the CMDB page'])
 			),
 			'Ansible Settings' => array(
-				$this->settingsOption('select2', 'Ansible-Tag', ['label' => 'The tag to use when filtering available jobs', 'options' => $AnsibleLabelsKeyValuePairs, 'settings' => '{tags: false, closeOnSelect: true, allowClear: true, width: "100%"}']),
+				$this->settingsOption('select2', 'Ansible-Tag', ['label' => 'The tag to use when filtering available jobs', 'options' => $AnsibleLabelsKeyValuePairs, 'value' => isset($this->config->get('Plugins','CMDB')['Ansible-Tag']) ? implode(',',$this->config->get('Plugins','CMDB')['Ansible-Tag']) : null, 'settings' => '{tags: false, closeOnSelect: true, allowClear: true, width: "100%"}']),
 				$this->settingsOption('checkbox','Ansible-JobByLabel', ['label' => 'Organise Jobs by Label'])
 			),
 		);

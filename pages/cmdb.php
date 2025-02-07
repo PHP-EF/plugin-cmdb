@@ -890,7 +890,7 @@
         jobId = $("#ansibleJobs").find(":selected").val();
       });
 
-      var formData = $("#CMDBModal").serializeArray();
+      var formData = $("#CMDBModal input, #CMDBModal select").serializeArray();
       
       // Include unchecked checkboxes in the formData
       $("#CMDBModal input[type=checkbox]").each(function() {
