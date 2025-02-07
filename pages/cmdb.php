@@ -589,7 +589,7 @@
         // Clear all values from column modal
         $("#columnModal input, #columnModal select").val("").removeClass("changed");
         // Populate Modal Title
-        $("#sectionModalLabel").text("Edit Column: "+row.name);
+        $("#columnModalLabel").text("Edit Column: "+row.name);
         // Populate Column Fields
         $("#columnName").val(row.name);
         $("#columnDescription").val(row.description);
