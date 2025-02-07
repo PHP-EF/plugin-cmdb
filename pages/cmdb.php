@@ -223,10 +223,10 @@
 
     // Record / Ansible Modals
     $("#ansibleJobSelectModal").on("show.bs.modal", function () {
-      $("#recordModal").modal("hide");
+      $("#CMDBModal").modal("hide");
     });
     $("#ansibleJobSelectModal").on("hidden.bs.modal", function () {
-        $("#recordModal").modal("show");
+        $("#CMDBModal").modal("show");
     });
 
     // Function to check if database requires rebuild
@@ -859,7 +859,7 @@
       }
     }
 
-    $("#recordModal").on("click", ".runJob", function(elem) {
+    $("#CMDBModal").on("click", ".runJob", function(elem) {
       if ($(this).attr("name") !== undefined) {
           var url = "/api/plugin/cmdb/ansible/templates?label="+$(this).attr("name");
       } else {
