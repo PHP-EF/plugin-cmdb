@@ -775,7 +775,7 @@
           "dataType": determineDataType($("#columnFieldType").val()) ?? null,
           "fieldType": $("#columnFieldType").val() ?? null,
           "section": $("#columnSection").val() ?? null,
-          "visible": $("#columnVisible").val() ?? null,
+          "visible": $("#columnVisible").is(":checked"),
       };
       if (postArr["fieldType"] == "SELECT" || postArr["fieldType"] == "SELECT2") {
         postArr["options"] = $("#columnSelectOptions").val().join(",");
