@@ -699,14 +699,7 @@ class cmdbPlugin extends phpef {
 			'CMDB Settings' => array(
 				$this->settingsOption('input', 'cmdbTitle', ['label' => 'The CMDB Title', 'placeholder' => 'CMDB', 'help' => 'This is the title text displayed at the top of the CMDB page']),
 				$this->settingsOption('input', 'cmdbDescription', ['label' => 'The CMDB Description', 'placeholder' => 'A CMDB.', 'help' => 'This is the descriptive text displayed at the top of the CMDB page'])
-			),
-			'Ansible Settings' => array(
-				$this->settingsOption('url', 'Ansible-URL', ['label' => 'Ansible AWX URL']),
-				$this->settingsOption('token', 'Ansible-Token', ['label' => 'Ansible AWX Token']),
-				$this->settingsOption('select2', 'Ansible-Tag', ['label' => 'The tag to use when filtering available jobs', 'options' => $AnsibleLabelsKeyValuePairs, 'settings' => '{tags: false, closeOnSelect: true, allowClear: true, width: "100%"}']),
-				$this->settingsOption('blank'),
-				$this->settingsOption('checkbox','Ansible-JobByLabel', ['label' => 'Organise Jobs by Label'])
-			),
+			)
 		);
 	}
 }
