@@ -296,6 +296,13 @@ class cmdbPlugin extends phpef {
 		return $Columns;
 	}
 
+	// Get a list of Select Options from a particular Column Definition
+	private function getColumnSelectOptions($id,$field) {
+		$result = $this->sql->query('SELECT '.$field.' FROM cmdb WHERE id = '.$id);
+		$Options = $result->fetch()[0];
+		return $Options;
+	}
+
 	// Add new column definition to CMDB Columns Table
 	public function addColumnDefinition($data,$Weight = null,$SkipChecks = false) {
 		$dbquery = $this->sql->prepare('SELECT EXISTS (SELECT 1 FROM cmdb_columns WHERE columnName = :columnName OR name = :name COLLATE NOCASE);');
@@ -621,7 +628,7 @@ class cmdbPlugin extends phpef {
 		}
 	}
 
-	public function buildCMDBForm() {
+	public function buildCMDBForm($id = null) {
 		$Sections = $this->getSections();
 		$Columns = $this->getColumnDefinitions();
 	
@@ -649,11 +656,18 @@ class cmdbPlugin extends phpef {
 						'description' => $column['description']
 					];
 	
-					if ($fieldType == "select") {
+					if (in_array($fieldType,array("select","select2"))) {
 						$optionsArray = explode(',', $column['options']);
 						$options['options'] = array_map(function($option) {
 							return ['name' => trim($option), 'value' => trim($option)];
 						}, $optionsArray);
+					}
+
+					if ($fieldType == "select2") {
+						$options['settings'] = '{tags: true, closeOnSelect: true, allowClear: true, width: "100%"}';
+						if ($id) {
+							$options['value'] = $this->getColumnSelectOptions($id,$column['columnName']);
+						}
 					}
 	
 					$settings[$sectionName][] = $this->settingsOption($fieldType, $column['columnName'], $options);
@@ -685,6 +699,10 @@ class cmdbPlugin extends phpef {
 				$this->settingsOption('auth', 'ACL-WRITE', ['label' => 'CMDB Write ACL']),
 				$this->settingsOption('auth', 'ACL-ADMIN', ['label' => 'CMDB Admin ACL']),
 				$this->settingsOption('auth', 'ACL-JOB', ['label' => 'Grants access to use Ansible Integration'])
+			),
+			'CMDB Settings' => array(
+				$this->settingsOption('input', 'cmdbTitle', ['label' => 'The CMDB Title', 'placeholder' => 'CMDB', 'help' => 'This is the title text displayed at the top of the CMDB page']),
+				$this->settingsOption('input', 'cmdbDescription', ['label' => 'The CMDB Description', 'placeholder' => 'A CMDB.', 'help' => 'This is the descriptive text displayed at the top of the CMDB page'])
 			),
 			'Ansible Settings' => array(
 				$this->settingsOption('url', 'Ansible-URL', ['label' => 'Ansible AWX URL']),

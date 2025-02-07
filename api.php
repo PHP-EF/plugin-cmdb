@@ -23,11 +23,23 @@ $app->get('/plugin/cmdb/layout/table', function ($request, $response, $args) {
 		->withStatus($GLOBALS['responseCode']);
 });
 
-// Get CMDB Layout (Used to build the form)
+// Get CMDB Layout (Used to build the new record form)
 $app->get('/plugin/cmdb/layout/form', function ($request, $response, $args) {
 	$cmdbPlugin = new cmdbPlugin();
 	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-READ'] ?? null)) {
         $cmdbPlugin->api->setAPIResponseData($cmdbPlugin->buildCMDBForm());
+	}
+	$response->getBody()->write(jsonE($GLOBALS['api']));
+	return $response
+		->withHeader('Content-Type', 'application/json;charset=UTF-8')
+		->withStatus($GLOBALS['responseCode']);
+});
+
+// Get CMDB Layout (Used to build the edit record form)
+$app->get('/plugin/cmdb/layout/form/{id}', function ($request, $response, $args) {
+	$cmdbPlugin = new cmdbPlugin();
+	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-READ'] ?? null)) {
+        $cmdbPlugin->api->setAPIResponseData($cmdbPlugin->buildCMDBForm($args['id']));
 	}
 	$response->getBody()->write(jsonE($GLOBALS['api']));
 	return $response

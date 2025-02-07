@@ -14,8 +14,8 @@
         <div class="card">
           <div class="card-body">
             <center>
-              <h4>CMDB</h4>
-              <p>A CMDB.</p>
+              <h4>' . (isset($pluginConfig["cmdbTitle"]) ? $pluginConfig["cmdbTitle"] : "CMDB") . '</h4>
+              <p>' . (isset($pluginConfig["cmdbDescription"]) ? $pluginConfig["cmdbDescription"] : "A CMDB.") . '</p>
             </center>
           </div>
         </div>
@@ -144,6 +144,7 @@
             <select class="form-select" id="columnFieldType" aria-describedby="columnFieldTypeHelp">
               <option value="INPUT">Text</option>
               <option value="SELECT">Select</option>
+              <option value="SELECT2">Multi-Select</option>2
               <option value="NUMBER">Number</option>
               <option value="CHECKBOX">Checkbox</option>
             </select>
@@ -566,7 +567,7 @@
             // Populate Modal Title
             $("#columnModalLabel").text("New Column");
             // Initialize Select Options
-            $("#columnSelectOptions").html("").select2({tags: true, selectOnClose: true, closeOnSelect: true, allowClear: true, width: "100%"});
+            $("#columnSelectOptions").html("").select2({tags: true, closeOnSelect: true, allowClear: true, width: "100%"});
             // Update Submit Button To New Column
             $("#columnSubmit").attr("onclick","newColumnSubmit();");
             // Populate Column Dropdown
@@ -600,7 +601,7 @@
         updateSectionDropdown(row);
         // Populate Select Options if applicable
         $("#columnSelectOptions").html("");
-        if (row.fieldType == "SELECT") {
+        if (row.fieldType == "SELECT" || row.fieldType == "SELECT2") {
           var optionsArray = row.options.split(",").map(function(option) {
               return { id: option.trim(), text: option.trim(), selected: true }; // Set selected attribute
           });
@@ -652,18 +653,22 @@
 
       var configData = {};
       formData.forEach(function(item) { 
-          var keys = item.name.split("[").map(function(key) {
-              return key.replace("]","");
-          });
-          var temp = configData;
-          keys.forEach(function(key, index) {
-              if (index === keys.length - 1) {
-                  temp[key] = item.value;
-              } else {
-                  temp[key] = temp[key] || {};
-                  temp = temp[key];
-              }
-          });
+        var element = $(`[name="${item.name}"]`);
+        var keys = item.name.split("[").map(function(key) {
+            return key.replace("]","");
+        });
+        var temp = configData;
+        keys.forEach(function(key, index) {
+            if (index === keys.length - 1) {
+                temp[key] = item.value;
+            } else {
+                temp[key] = temp[key] || {};
+                temp = temp[key];
+            }
+        });
+        if (element.is("select[multiple]")) {
+          configData[item.name] = $(element).val().join(",");
+        }
       });
       queryAPI("POST","/api/plugin/cmdb/record",configData).done(function(data) {
         if (data["result"] == "Success") {
@@ -688,19 +693,23 @@
       });
 
       var configData = {};
-      formData.forEach(function(item) { 
-          var keys = item.name.split("[").map(function(key) {
-              return key.replace("]","");
-          });
-          var temp = configData;
-          keys.forEach(function(key, index) {
-              if (index === keys.length - 1) {
-                  temp[key] = item.value;
-              } else {
-                  temp[key] = temp[key] || {};
-                  temp = temp[key];
-              }
-          });
+      formData.forEach(function(item) {
+        var element = $(`[name="${item.name}"]`);
+        var keys = item.name.split("[").map(function(key) {
+            return key.replace("]","");
+        });
+        var temp = configData;
+        keys.forEach(function(key, index) {
+            if (index === keys.length - 1) {
+                temp[key] = item.value;
+            } else {
+                temp[key] = temp[key] || {};
+                temp = temp[key];
+            }
+        });
+        if (element.is("select[multiple]")) {
+          configData[item.name] = $(element).val().join(",");
+        }
       });
       queryAPI("PATCH","/api/plugin/cmdb/record/"+id,configData).done(function(data) {
         if (data["result"] == "Success") {
@@ -768,7 +777,7 @@
           "section": $("#columnSection").val() ?? null,
           "visible": $("#columnVisible").val() ?? null,
       };
-      if (postArr["fieldType"] == "SELECT") {
+      if (postArr["fieldType"] == "SELECT" || postArr["fieldType"] == "SELECT2") {
         postArr["options"] = $("#columnSelectOptions").val().join(",");
       }
       if (postArr) {
@@ -799,7 +808,7 @@
           "section": $("#columnSection").val() ?? null,
           "visible": $("#columnVisible").is(":checked"),
       };
-      if (postArr["fieldType"] == "SELECT") {
+      if (postArr["fieldType"] == "SELECT" || postArr["fieldType"] == "SELECT2") {
         postArr["options"] = $("#columnSelectOptions").val().join(",");
       }
       if (postArr) {
@@ -934,8 +943,13 @@
       $("#CMDBModal .modal-dialog").removeClass("modal-xs modal-sm modal-md modal-lg modal-xl modal-xxl").addClass(`modal-${size}`);
       // Empty the additional settings array
 
+      var URI = "/api/plugin/cmdb/layout/form";
+      if (Object.keys(row).length > 0) {
+        URI = URI+"/"+row["id"];
+      }
+
       try {
-        queryAPI("GET", "/api/plugin/cmdb/layout/form").done(function(cmdbRecordSettings) {
+        queryAPI("GET", URI).done(function(cmdbRecordSettings) {
           const settingsData = cmdbRecordSettings.data;
           $("#CMDBModalBody").html(buildFormGroup(settingsData));
           $("#CMDBModalSubmit").attr("onclick", saveFunction);
@@ -945,7 +959,10 @@
             for (const key in row) {
                 if (row.hasOwnProperty(key)) {
                     const value = row[key];
-                    $(`[name=${key}]`).val(value);
+                    element = $(`[name=${key}]`);
+                    if (element.is("select[multiple]")) {
+                      $(element).val(value.split(","));
+                    }
                 }
             }
             if (row["id"]) {
@@ -967,6 +984,7 @@
       switch(fieldType) {
         case "INPUT":
         case "SELECT":
+        case "SELECT2":
           return "TEXT";
         case "NUMBER":
           return "INTEGER";

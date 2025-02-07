@@ -10,7 +10,7 @@ $("body").on('change, input', '#CMDBModal .info-field', function(event) {
 });
 
 $("body").on('change', '#columnFieldType', function(event) {
-    if ($(this).val() == "SELECT") {
+    if ($(this).val() == "SELECT" || $(this).val() == "SELECT2") {
         $("#columnSelectOptions").parent().attr('hidden',false);
     } else {
         $("#columnSelectOptions").parent().attr('hidden',true);
