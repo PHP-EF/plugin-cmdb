@@ -917,7 +917,7 @@
         if (data["result"] == "Success") {
           var ansibleJob = data.data;
           if (ansibleJob.job) {
-            $("#jobOutput").append(`<p>Job ${ansibleJob.id} started successfully. Click <a href="'; $content .= $cmdbPlugin->config->get("Plugins","CMDB")["Ansible-URL"]; $content .= '/#/jobs/playbook/"+ansibleJob.id+"/output" target="_blank">here</a> to view the Job in Ansible</p>`);
+            $("#jobOutput").append(`<p>Job ${ansibleJob.id} started successfully. Click <a href="'; $content .= $cmdbPlugin->config->get("Plugins","CMDB")["Ansible-URL"]; $content .= '/#/jobs/playbook/${ansibleJob.id}/output" target="_blank">here</a> to view the Job in Ansible</p>`);
             $("#jobOutput").addClass("alert alert-success");
           } else {
             $("#jobOutput").append("<p>Job failed to start. See below for more information.</p>");
