@@ -71,6 +71,7 @@ class cmdbPlugin extends phpef {
 			description TEXT,
 			dataType TEXT,
 			fieldType TEXT,
+			options TEXT,
 			section INTEGER,
 			visible BOOLEAN,
 			weight INTEGER,
@@ -117,7 +118,16 @@ class cmdbPlugin extends phpef {
 		$ColumnDefinitions = $this->getColumnDefinitions();
 		foreach ($BaseColumns as $BaseColumn) {
 			if (!in_array($BaseColumn[0],array_column($ColumnDefinitions,"name"))) {
-				$this->addColumnDefinition($BaseColumn[0],$BaseColumn[1],$BaseColumn[2],$BaseColumn[3],$BaseColumn[4],$BaseColumn[5],$BaseColumn[6],$BaseColumn[7],true);
+				$Data = [
+					'columnName' => $BaseColumn[0],
+					'name' => $BaseColumn[1],
+					'description' => $BaseColumn[2],
+					'dataType' => $BaseColumn[3],
+					'fieldType' => $BaseColumn[4],
+					'section' => $BaseColumn[5],
+					'visible' => $BaseColumn[6]
+				];
+				$this->addColumnDefinition($Data,$BaseColumn[7],true);
 			}
 		}
 		$Columns = $this->getDefinedColumns();
@@ -165,13 +175,19 @@ class cmdbPlugin extends phpef {
 		// Create a set of columns from the cmdb_columns table
 		$latest_columns = [];
 		foreach ($columns as $column) {
-			$latest_columns[$column['columnName']] = $column['dataType'];
+			if (!empty($column['columnName'])) { // Check for non-empty column names
+				$latest_columns[$column['columnName']] = $column['dataType'];
+			}
 		}
 
 		// Add new columns
 		foreach ($latest_columns as $column => $data_type) {
 			if (!array_key_exists($column, $current_columns)) {
-				if (!$this->sql->query("ALTER TABLE cmdb ADD COLUMN $column $data_type")) {
+				// Construct the SQL query to add the new column
+				$query = "ALTER TABLE cmdb ADD COLUMN $column $data_type";
+				
+				// Execute the query
+				if (!$this->sql->query($query)) {
 					$this->api->setAPIResponse('Error', 'Failed to add new column: ' . $column);
 					return false;
 				}
@@ -281,20 +297,20 @@ class cmdbPlugin extends phpef {
 	}
 
 	// Add new column definition to CMDB Columns Table
-	public function addColumnDefinition($columnName,$name,$columnDescription,$dataType,$fieldType,$SectionID,$Visible,$Weight = null,$SkipChecks = false) {
+	public function addColumnDefinition($data,$Weight = null,$SkipChecks = false) {
 		$dbquery = $this->sql->prepare('SELECT EXISTS (SELECT 1 FROM cmdb_columns WHERE columnName = :columnName OR name = :name COLLATE NOCASE);');
-		$dbquery->execute([":columnName" => $columnName,":name" => $name]);
+		$dbquery->execute([":columnName" => $data['columnName'],":name" => $data['name']]);
 		$results = $dbquery->fetchColumn() > 0;
 
 		if (!$SkipChecks) {
 			// Check if 'fqdn' exists as a value in 'columnName' within cmdb_columns
 			$dbquery = $this->sql->prepare('SELECT EXISTS (SELECT 1 FROM cmdb_columns WHERE columnName = :columnName COLLATE NOCASE)');
-			$dbquery->execute([":columnName" => $columnName]);
+			$dbquery->execute([":columnName" => $data['columnName']]);
 			$existsInColumns = $dbquery->fetchColumn();
 
 			// Check if 'fqdn' is an actual column in the 'cmdb' table
 			$dbquery = $this->sql->prepare("SELECT EXISTS (SELECT 1 FROM pragma_table_info('cmdb') WHERE name = :name COLLATE NOCASE)");
-			$dbquery->execute([":name" => $columnName]);
+			$dbquery->execute([":name" => $data['columnName']]);
 			$existsAsColumn = $dbquery->fetchColumn();
 		} else {
 			$existsInColumns = false;
@@ -309,12 +325,13 @@ class cmdbPlugin extends phpef {
 			$this->api->setAPIResponse('Error','Column already exists.');
 			return false;
 		} else {
+			$Options = $data['options'] ?? '';
 			if ($Weight) {
-				$dbquery = $this->sql->prepare("INSERT INTO cmdb_columns (columnName, name, description, dataType, fieldType, section, visible, weight) VALUES (:columnName, :name, :description, :dataType, :fieldType, :section, :visible, :weight);");
-				$execute = [":columnName" => $columnName,":name" => $name,":description" => $columnDescription, ":dataType" => $dataType, ":fieldType" => $fieldType, ":section" => $SectionID, ":visible" => $Visible, ":weight" => $Weight];
+				$dbquery = $this->sql->prepare("INSERT INTO cmdb_columns (columnName, name, description, dataType, fieldType, section, visible, options, weight) VALUES (:columnName, :name, :description, :dataType, :fieldType, :section, :visible, :options, :weight);");
+				$execute = [":columnName" => $data['columnName'],":name" => $data['name'],":description" => $data['description'], ":dataType" => $data['dataType'], ":fieldType" => $data['fieldType'], ":section" => $data['section'], ":visible" => $data['visible'], ":options" => $data['options'], ":weight" => $Weight];
 			} else {
-				$dbquery = $this->sql->prepare("INSERT INTO cmdb_columns (columnName, name, description, dataType, fieldType, section, visible, weight) VALUES (:columnName, :name, :description, :dataType, :fieldType, :section, :visible, (SELECT IFNULL(MAX(weight), 0) + 1 FROM cmdb_columns WHERE section = :section));");
-				$execute = [":columnName" => $columnName,":name" => $name,":description" => $columnDescription, ":dataType" => $dataType, ":fieldType" => $fieldType, ":section" => $SectionID, ":visible" => $Visible];
+				$dbquery = $this->sql->prepare("INSERT INTO cmdb_columns (columnName, name, description, dataType, fieldType, section, visible, options, weight) VALUES (:columnName, :name, :description, :dataType, :fieldType, :section, :visible, :options, (SELECT IFNULL(MAX(weight), 0) + 1 FROM cmdb_columns WHERE section = :section));");
+				$execute = [":columnName" => $data['columnName'],":name" => $data['name'],":description" => $data['description'], ":dataType" => $data['dataType'], ":fieldType" => $data['fieldType'], ":section" => $data['section'], ":visible" => $data['visible'], ":options" => $data['options']];
 			}
 			if ($dbquery->execute($execute)) {
 				$this->api->setAPIResponseMessage('Successfully added column');
@@ -627,14 +644,22 @@ class cmdbPlugin extends phpef {
 			foreach ($Columns as $column) {
 				if ($column['section'] == $section['id']) {
 					$fieldType = strtolower($column['fieldType']);
-					$settings[$sectionName][] = $this->settingsOption($fieldType, $column['columnName'], [
+					$options = [
 						'label' => $column['name'],
 						'description' => $column['description']
-					]);
+					];
+	
+					if ($fieldType == "select") {
+						$optionsArray = explode(',', $column['options']);
+						$options['options'] = array_map(function($option) {
+							return ['name' => trim($option), 'value' => trim($option)];
+						}, $optionsArray);
+					}
+	
+					$settings[$sectionName][] = $this->settingsOption($fieldType, $column['columnName'], $options);
 				}
 			}
 		}
-	
 		return $settings;
 	}
 

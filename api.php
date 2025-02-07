@@ -176,15 +176,9 @@ $app->post('/plugin/cmdb/columns', function ($request, $response, $args) {
     if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'] ?: 'ACL-ADMIN')) {
         $data = $cmdbPlugin->api->getAPIRequestData($request);
         // Create the CMDB Section with the submitted data
-		$name = $data['name'] ?? null;
-		$section = $data['section'] ?? null;
-		$description = $data['description'] ?? null;
-		$dataType = $data['dataType'] ?? null;
-		$fieldType = $data['fieldType'] ?? null;
-		$visible = $data['visible'] ?? null;
-		$columnName = sanitizeInput($name);
-		if ($name && $section && $dataType && $fieldType) {
-			$cmdbPlugin->addColumnDefinition($columnName,$name,$description,$dataType,$fieldType,$section,$visible);
+		$data['columnName'] = sanitizeInput($data['name']);
+		if ($data['name'] && $data['section'] && $data['dataType'] && $data['fieldType']) {
+			$cmdbPlugin->addColumnDefinition($data);
 		} else {
 			$cmdbPlugin->api->setAPIResponse('Error','Required information missing from request');
 		}

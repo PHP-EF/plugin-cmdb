@@ -28,9 +28,7 @@
           <div class="card-body">
             <div class="container">
               <div class="row justify-content-center">
-
                 <table class="table table-striped" id="cmdbTable"></table>
-
               </div>
             </div>
           </div>
@@ -40,6 +38,7 @@
     <br>
   </section>
 
+  <!-- CMDB Record Modal -->
   <div class="modal fade" id="CMDBModal" tabindex="-1" role="dialog" aria-labelledby="CMDBModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
       <div class="modal-content">
@@ -73,7 +72,6 @@
       </div>
     </div>
   </div>
-
   
   <!-- Manage Sections/Columns Modal -->
   <div class="modal fade" id="manageModal" tabindex="-1" role="dialog" aria-labelledby="manageModalLabel" aria-hidden="true">
@@ -145,11 +143,15 @@
             <label for="columnFieldType">Field Type</label>
             <select class="form-select" id="columnFieldType" aria-describedby="columnFieldTypeHelp">
               <option value="INPUT">Text</option>
-              <option value="SELECT" disabled>Select</option>
+              <option value="SELECT">Select</option>
               <option value="NUMBER">Number</option>
               <option value="CHECKBOX">Checkbox</option>
             </select>
             <small class="form-text text-muted" id="columnFieldTypeHelp">The CMDB Column Field Type</small>
+          </div>
+          <div class="form-group" hidden>
+            <label for="columnSelectOptions">Select Options</label>
+            <select id="columnSelectOptions" class="m-b-10 info-field" multiple="multiple" data-placeholder=""></select>
           </div>
           <div class="form-group">
             <label for="columnSection">Section</label>
@@ -252,7 +254,7 @@
         rowAttributes: "rowAttributes",
         onReorderRow: onReorderSectionsRow,
         detailView: true,
-        cmdbDetailFormatter: cmdbDetailFormatter,
+        detailFormatter: cmdbDetailFormatter,
         onExpandRow: buildColumnsTable,
         buttons: "sectionButtons",
         columns: [{
@@ -563,6 +565,8 @@
             $("#columnModal input").val("").removeClass("changed");
             // Populate Modal Title
             $("#columnModalLabel").text("New Column");
+            // Initialize Select Options
+            $("#columnSelectOptions").html("").select2({tags: true, selectOnClose: true, closeOnSelect: true, allowClear: true, width: "100%"});
             // Update Submit Button To New Column
             $("#columnSubmit").attr("onclick","newColumnSubmit();");
             // Populate Column Dropdown
@@ -583,7 +587,7 @@
     window.columnActionEvents = {
       "click .edit": function (e, value, row, index) {
         // Clear all values from column modal
-        $("#columnModal input").val("").removeClass("changed");
+        $("#columnModal input, #columnModal select").val("").removeClass("changed");
         // Populate Modal Title
         $("#sectionModalLabel").text("Edit Column: "+row.name);
         // Populate Column Fields
@@ -592,8 +596,28 @@
         $("#columnFieldType").val(row.fieldType);
         $("#columnVisible").prop("checked", row.visible);
         $("#columnSqlName").val(row.columnName);
-        // Populate Column Dropdown
+        // Populate Section Dropdown
         updateSectionDropdown(row);
+        // Populate Select Options if applicable
+        $("#columnSelectOptions").html("");
+        if (row.fieldType == "SELECT") {
+          var optionsArray = row.options.split(",").map(function(option) {
+              return { id: option.trim(), text: option.trim(), selected: true }; // Set selected attribute
+          });
+
+          $("#columnSelectOptions").select2({
+              data: optionsArray,
+              tags: true,
+              selectOnClose: true,
+              closeOnSelect: true,
+              allowClear: true,
+              width: "100%"
+          });
+
+          $("#columnSelectOptions").parent().attr("hidden", false);
+        } else {
+          $("#columnSelectOptions").parent().attr("hidden", true);
+        }
         // Show Column Modal
         $("#columnModal").modal("show");
         // Update Submit Button To Edit Column
@@ -744,6 +768,9 @@
           "section": $("#columnSection").val() ?? null,
           "visible": $("#columnVisible").val() ?? null,
       };
+      if (postArr["fieldType"] == "SELECT") {
+        postArr["options"] = $("#columnSelectOptions").val().join(",");
+      }
       if (postArr) {
         queryAPI("POST","/api/plugin/cmdb/columns",postArr).done(function(data) {
           if (data["result"] == "Success") {
@@ -772,6 +799,9 @@
           "section": $("#columnSection").val() ?? null,
           "visible": $("#columnVisible").is(":checked"),
       };
+      if (postArr["fieldType"] == "SELECT") {
+        postArr["options"] = $("#columnSelectOptions").val().join(",");
+      }
       if (postArr) {
         queryAPI("PATCH","/api/plugin/cmdb/column/"+id,postArr).done(function(data) {
           if (data["result"] == "Success") {
