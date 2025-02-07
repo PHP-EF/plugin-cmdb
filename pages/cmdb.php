@@ -961,7 +961,9 @@
                     const value = row[key];
                     element = $(`[name=${key}]`);
                     if (element.is("select[multiple]")) {
-                      $(element).val(value.split(","));
+                      if (Array.isArray(value)) {
+                        $(element).val(value.split(","));
+                      }
                     } else {
                      $(element).val(value);
                     }
