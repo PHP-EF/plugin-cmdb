@@ -111,8 +111,8 @@ class cmdbPlugin extends phpef {
 			['DNSServers','DNS Servers','The DNS Servers of the server','TEXT','INPUT',2,TRUE,4],
 			['DNSSuffix','DNS Suffix','The DNS Suffix of the server','TEXT','INPUT',2,TRUE,5],
 			['Gateway','Gateway','The Gateway IP of the server','TEXT','INPUT',2,TRUE,6],
-			['CPU','CPUs','The number of CPUs the server has','INTEGER','INPUT',3,TRUE,1],
-			['Memory','Memory (GB)','The allocated memory of the server','INTEGER','INPUT',3,TRUE,2]
+			['CPU','CPUs','The number of CPUs the server has','INTEGER','NUMBER',3,TRUE,1],
+			['Memory','Memory (GB)','The allocated memory of the server','INTEGER','NUMBER',3,TRUE,2]
 		];
 
 		$ColumnDefinitions = $this->getColumnDefinitions();
