@@ -962,6 +962,8 @@
                     element = $(`[name=${key}]`);
                     if (element.is("select[multiple]")) {
                       $(element).val(value.split(","));
+                    } else {
+                     $(element).val(value);
                     }
                 }
             }
