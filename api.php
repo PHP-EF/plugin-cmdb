@@ -355,7 +355,7 @@ $app->post('/plugin/cmdb/ansible/job/{id}', function ($request, $response, $args
 			"request" => $data,
 			"response" => $result
 		);
-		if (isset($result->job)) {
+		if (isset($result['job'])) {
 			$cmdbPlugin->logging->writeLog("Ansible","Submitted Ansible Job.","info",$DebugArr);
 			$cmdbPlugin->api->setAPIResponseData($result);
 		} else {
