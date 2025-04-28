@@ -183,6 +183,40 @@
     </div>
   </div>
 
+  <!-- Sort Options Modal -->
+  <div class="modal fade pt-5" id="sortOptionsModal" tabindex="-1" role="dialog" aria-labelledby="sortOptionsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="sortOptionsModalLabel">Default Sort Options</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true"></span>
+          </button>
+        </div>
+        <div class="modal-body" id="sortOptionsModalBody">
+          <div class="form-group">
+            <label for="sortColumn">Sort Column</label>
+            <select class="form-select" id="sortColumn" aria-describedby="sortColumnHelp">
+            </select>
+            <small class="form-text text-muted" id="sortColumnHelp">The CMDB Column to sort by default</small>
+          </div>
+          <div class="form-group">
+            <label for="sortColumnDirection">Sort Direction</label>
+            <select class="form-select" id="sortColumnDirection" aria-describedby="sortColumnDirectionHelp">
+              <option value="asc">Ascending</option>
+              <option value="desc">Descending</option>
+            </select>
+            <small class="form-text text-muted" id="sortColumnDirectionHelp">The direction to sort by default</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-success" data-bs-dismiss="modal" id="sortOptionsSubmit">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Ansible Job Select Modal -->
   <div class="modal fade" id="ansibleJobSelectModal" tabindex="-1" role="dialog" aria-labelledby="ansibleJobSelectLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -214,12 +248,13 @@
   <script>
     // ** Modal Listeners
     // Column / Section Manage Modals
-    $("#columnModal, #sectionModal").on("show.bs.modal", function () {
+    $("#columnModal, #sectionModal, #sortOptionsModal").on("show.bs.modal", function () {
       $("#manageModal").modal("hide");
     });
-    $("#columnModal, #sectionModal").on("hidden.bs.modal", function () {
+    $("#columnModal, #sectionModal, #sortOptionsModal").on("hidden.bs.modal", function () {
         $("#manageModal").modal("show");
     });
+
 
     // Record / Ansible Modals
     $("#ansibleJobSelectModal").on("show.bs.modal", function () {
@@ -389,22 +424,31 @@
           events: "cmdbActionEvents"
       });
 
-      $("#cmdbTable").bootstrapTable({
-          url: "/api/plugin/cmdb/records",
-          dataField: "data",
-          sortable: true,
-          pagination: true,
-          search: true,
-          showExport: true,
-          showRefresh: true,
-          exportTypes: ["json", "xml", "csv", "txt", "excel", "sql"],
-          showColumns: true,
-          buttons: "cmdbButtons",
-          buttonsOrder: "btnAddRecord,refresh,columns,export,filterControlSwitch,btnEditColumns",
-          filterControl: true,
-          filterControlVisible: false,
-          showFilterControlSwitch: true,
-          columns: columns
+      queryAPI("GET","/api/plugin/cmdb/sortOptions").done(function(sortOptions) {
+        if (sortOptions["result"] == "Success") {
+        console.log(sortOptions);
+          $("#cmdbTable").bootstrapTable({
+              url: "/api/plugin/cmdb/records",
+              dataField: "data",
+              sortable: true,
+              pagination: true,
+              search: true,
+              sortOrder: sortOptions["data"]["direction"],
+              sortName: sortOptions["data"]["column"],
+              showExport: true,
+              showRefresh: true,
+              exportTypes: ["json", "xml", "csv", "txt", "excel", "sql"],
+              showColumns: true,
+              buttons: "cmdbButtons",
+              buttonsOrder: "btnAddRecord,refresh,columns,export,filterControlSwitch,btnEditColumns",
+              filterControl: true,
+              filterControlVisible: false,
+              showFilterControlSwitch: true,
+              columns: columns
+          });
+        } else {
+          toast(data["result"],"",data["message"],"warning","30000");
+        }
       });
     }
 
@@ -578,6 +622,32 @@
           attributes: {
             title: "Add a CMDB Column",
             style: "background-color:#d0a624;border-color:#d0a624;"
+          }
+        },
+        btnSortOptions: {
+          text: "Sort Options",
+          icon: "bi bi-filter",
+          event: function() {
+            // Clear all values from columns modal
+            $("#sortOptionsModal input").val("").removeClass("changed");
+            // Build Columns Dropdown
+            updateColumnDropdown();
+            // Show columns modal
+            $("#sortOptionsModal").modal("show");
+            // Update Settings
+            queryAPI("GET","/api/plugin/cmdb/sortOptions").done(function(data) {
+              if (data["result"] == "Success") {
+                $("#sortColumn").val(data["data"]["column"]);
+                $("#sortColumnDirection").val(data["data"]["direction"]);
+              } else {
+                toast(data["result"],"",data["message"],"warning","30000");
+              }
+            });
+            $("#sortOptionsSubmit").attr("onclick","updateSortOptionsSubmit();");
+          },
+          attributes: {
+            title: "Configure default sort options",
+            style: "background-color:#be4740;border-color:#be4740;"
           }
         }';}
         $content .= '
@@ -840,6 +910,37 @@
         });
         row.section ? sectionDropdown.val(row.section) : sectionDropdown.val("");
       });
+    }
+
+    function updateColumnDropdown(row = {}) {
+      queryAPI("GET","/api/plugin/cmdb/columns").done(function(data) {
+        const columnDropdown = $("#sortColumn");
+        columnDropdown.html("");
+        $.each(data.data, function(index, item) {
+            const option = $("<option></option>").val(item.columnName).text(item.name);
+            columnDropdown.append(option);
+        });
+        row.section ? columnDropdown.val(row.section) : columnDropdown.val("");
+      });
+    }
+
+    function updateSortOptionsSubmit() {
+      var postArr = {
+          "column": $("#sortColumn").val() ?? null,
+          "direction": $("#sortColumnDirection").val() ?? null
+      };
+      queryAPI("POST","/api/plugin/cmdb/sortOptions",postArr).done(function(data) {
+        if (data["result"] == "Success") {
+            toast(data["result"],"",data["message"],"success");
+            $("#sortOptionsModal").modal("hide");
+        } else if (data["result"] == "Error") {
+            toast(data["result"],"",data["message"],"danger");
+        } else {
+            toast("API Error","","Failed to update the default sort options","danger","30000");
+        }
+      }).fail(function() {
+        toast("API Error","","Failed to update the default sort options","danger","30000");
+      });;
     }
 
     function rebuildDB() {

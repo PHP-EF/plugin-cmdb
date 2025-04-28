@@ -53,7 +53,13 @@ $app->get('/plugin/cmdb/layout/form/{id}', function ($request, $response, $args)
 $app->get('/plugin/cmdb/records', function ($request, $response, $args) {
 	$cmdbPlugin = new cmdbPlugin();
 	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-READ'] ?? null)) {
-        $GLOBALS['api']['data'] = $cmdbPlugin->getAllRecords() ?? [];
+		// Include support for &sort and &order query params
+		$data = $request->getQueryParams();
+		if (isset($data['sort']) && isset($data['order'])) {
+			$cmdbPlugin->api->setAPIResponseData($cmdbPlugin->getAllRecords($data['sort'], $data['order']) ?? []);
+		} else {
+			$cmdbPlugin->api->setAPIResponseData($cmdbPlugin->getAllRecords() ?? []);
+		}
 	}
 	$response->getBody()->write(jsonE($GLOBALS['api']));
 	return $response
@@ -263,6 +269,36 @@ $app->patch('/plugin/cmdb/section/{id}/weight', function ($request, $response, $
 			}
 		} else {
 			$cmdbPlugin->api->setAPIResponse('Error','Weight missing from request');
+		}        
+	}
+	$response->getBody()->write(jsonE($GLOBALS['api']));
+	return $response
+		->withHeader('Content-Type', 'application/json;charset=UTF-8')
+		->withStatus($GLOBALS['responseCode']);
+});
+
+// Get CMDB Sort Options
+$app->get('/plugin/cmdb/sortOptions', function ($request, $response, $args) {
+	$cmdbPlugin = new cmdbPlugin();
+	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'] ?: 'ACL-ADMIN')) {
+		$data = $cmdbPlugin->api->getAPIRequestData($request);
+		$cmdbPlugin->api->setAPIResponseData($cmdbPlugin->getSortOptions());
+	}
+	$response->getBody()->write(jsonE($GLOBALS['api']));
+	return $response
+		->withHeader('Content-Type', 'application/json;charset=UTF-8')
+		->withStatus($GLOBALS['responseCode']);
+});
+
+// Update CMDB Sort Options
+$app->post('/plugin/cmdb/sortOptions', function ($request, $response, $args) {
+	$cmdbPlugin = new cmdbPlugin();
+	if ($cmdbPlugin->auth->checkAccess($cmdbPlugin->config->get('Plugins','CMDB')['ACL-ADMIN'] ?: 'ACL-ADMIN')) {
+		$data = $cmdbPlugin->api->getAPIRequestData($request);
+		if (isset($data['column']) && isset($data['direction'])) {
+			$cmdbPlugin->updateSortOptions($data['column'],$data['direction']);
+		} else {
+			$cmdbPlugin->api->setAPIResponse('Error','Sort information missing from request');
 		}        
 	}
 	$response->getBody()->write(jsonE($GLOBALS['api']));

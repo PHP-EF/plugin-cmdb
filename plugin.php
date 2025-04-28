@@ -555,9 +555,21 @@ class cmdbPlugin extends phpef {
 
 	// ** RECORDS ** //
 
-	public function getAllRecords() {
-		$dbquery = $this->sql->prepare("SELECT * FROM cmdb");
-        $dbquery->execute();
+	public function getAllRecords($sort,$order) {
+		//Add support for &sort and &order params
+		$order = $order ?? 'asc';
+		$validSortColumns = $this->getColumnDefinitions();
+		$validSortColumns = array_column($validSortColumns, 'columnName');
+		if (!in_array($sort, $validSortColumns)) {
+			$sort = 'id';
+		}
+		if ($order != 'asc' && $order != 'desc') {
+			$order = 'asc';
+		}
+		
+		// Prepare and execute the query
+		$dbquery = $this->sql->prepare("SELECT * FROM cmdb ORDER BY $sort $order");
+		$dbquery->execute();
 		$records = $dbquery->fetchAll(PDO::FETCH_ASSOC);
 		return $records;
 	}
@@ -675,6 +687,39 @@ class cmdbPlugin extends phpef {
 			}
 		}
 		return $settings;
+	}
+
+	public function updateSortOptions($column,$direction) {
+		$sortOptions = json_encode([
+			'column' => $column,
+			'direction' => $direction
+		]);
+
+		// Update or replace the sortOptions in the misc table
+		$stmt = $this->sql->prepare('SELECT EXISTS (SELECT 1 FROM misc WHERE key = :key)');
+		$stmt->execute([':key' => 'sortOptions']);
+		$exists = $stmt->fetchColumn() > 0;
+		if ($exists) {
+			$stmt = $this->sql->prepare('UPDATE misc SET value = :value WHERE key = :key');
+			$stmt->execute([':value' => $sortOptions, ':key' => 'sortOptions']);
+		} else {
+			$stmt = $this->sql->prepare('INSERT INTO misc (key, value) VALUES (:key, :value)');
+			$stmt->execute([':key' => 'sortOptions', ':value' => $sortOptions]);
+		}
+		// Check if the update was successful
+		if ($stmt->rowCount() > 0) {
+			$this->api->setAPIResponseMessage("Updated Sort Options");
+		} else {
+			$this->api->setAPIResponse('Error', 'Failed to update sort options');
+		}
+	}
+
+	public function getSortOptions() {
+		$stmt = $this->sql->prepare('SELECT * FROM misc WHERE key = :key');
+		$stmt->execute([':key' => 'sortOptions']);
+		$results = $stmt->fetch();
+		$returndata = json_decode($results['value']) ?? ['column' => 'id', 'direction' => 'asc'];
+		return $returndata;
 	}
 
 	public function _pluginGetSettings() {
