@@ -285,7 +285,7 @@
         showRefresh: true,
         exportTypes: ["json", "xml", "csv", "txt", "excel", "sql"],
         showColumns: true,
-        buttonsOrder: "btnAddSection,btnAddColumn,refresh,columns,export,filterControlSwitch",
+        buttonsOrder: "btnAddSection,btnAddColumn,btnSortOptions,refresh,columns,export,filterControlSwitch",
         reorderableRows: true,
         rowAttributes: "rowAttributes",
         onReorderRow: onReorderSectionsRow,
