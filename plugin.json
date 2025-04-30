@@ -19,6 +19,7 @@
     "changelog": {
       "type": "url",
       "url": "https://github.com/php-ef/plugin-cmdb/main/changelog.json",
+      "title": "Changelog",
       "data": [
         {
           "version": "1.0.6",
