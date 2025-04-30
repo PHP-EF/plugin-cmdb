@@ -1,20 +1,40 @@
 [
-    {
-      "name": "CMDB",
-      "repo": "https://github.com/php-ef/plugin-cmdb",
-      "author": "TehMuffinMoo",
-      "category": "Asset Database",
-      "description": "This PHP-EF plugin provides an Asset Database (CMDB) with Ansible Integration.",
-      "icon": "https://raw.githubusercontent.com/php-ef/plugin-cmdb/main/logo.png",
-      "contact": "https://github.com/php-ef/plugin-cmdb/issues",
-      "link": "https://github.com/php-ef/plugin-cmdb",
-      "version": "1.0.7",
-      "minimum_php-ef_version": "0.8.2",
-      "release_date": "2024-12-20",
-      "last_updated": "2024-12-30",
-      "github_folder": "",
-      "requires": [
-        "awx"
+  {
+    "name": "CMDB",
+    "repo": "https://github.com/php-ef/plugin-cmdb",
+    "author": "TehMuffinMoo",
+    "category": "Asset Database",
+    "description": "This PHP-EF plugin provides an Asset Database (CMDB) with Ansible Integration.",
+    "icon": "https://raw.githubusercontent.com/php-ef/plugin-cmdb/main/logo.png",
+    "contact": "https://github.com/php-ef/plugin-cmdb/issues",
+    "link": "https://github.com/php-ef/plugin-cmdb",
+    "version": "1.0.7",
+    "minimum_php-ef_version": "0.8.2",
+    "release_date": "2024-12-20",
+    "last_updated": "2025-04-30",
+    "github_folder": "",
+    "requires": [
+      "awx"
+    ],
+    "changelog": {
+      "type": "url",
+      "url": "https://github.com/php-ef/plugin-cmdb/main/changelog.json",
+      "data": [
+        {
+          "version": "1.0.6",
+          "date": "14-01-2025",
+          "changes": [
+              "Bug fixes & improvements"
+          ]
+        },
+        {
+          "version": "1.0.7",
+          "date": "28-04-2025",
+          "changes": [
+              "Added support for default sort ordering on CMDB page"
+          ]
+        }
       ]
     }
+  }
 ]
