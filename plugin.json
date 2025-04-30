@@ -22,17 +22,18 @@
       "title": "Changelog",
       "data": [
         {
+          "version": "1.0.7",
+          "date": "28-04-2025",
+          "changes": [
+              "Bug fixes & improvements",
+              "Added support for default sort ordering on CMDB page"
+          ]
+        },
+        {
           "version": "1.0.6",
           "date": "14-01-2025",
           "changes": [
               "Bug fixes & improvements"
-          ]
-        },
-        {
-          "version": "1.0.7",
-          "date": "28-04-2025",
-          "changes": [
-              "Added support for default sort ordering on CMDB page"
           ]
         }
       ]
