@@ -17,8 +17,8 @@
       "awx"
     ],
     "changelog": {
-      "type": "url",
-      "url": "https://github.com/php-ef/plugin-cmdb/main/changelog.json",
+      "type": "builtin",
+      "url": "",
       "title": "Changelog",
       "data": [
         {
