@@ -19,7 +19,7 @@
     "changelog": {
       "type": "builtin",
       "url": "",
-      "title": "Changelog",
+      "title": "Change Log",
       "data": [
         {
           "version": "1.0.7",
